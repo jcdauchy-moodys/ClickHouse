@@ -6,6 +6,7 @@ from itertools import combinations
 import json
 from datetime import datetime
 from functools import lru_cache
+from glob import glob
 
 import pandas as pd
 from jinja2 import Environment, FileSystemLoader
@@ -368,6 +369,22 @@ def get_new_fails_this_pr(
     return new_fails_df
 
 
+@lru_cache
+def get_workflow_config() -> dict:
+    workflow_config_files = glob("./ci/tmp/workflow_config*.json")
+    if len(workflow_config_files) == 0:
+        raise Exception("No workflow config file found")
+    if len(workflow_config_files) > 1:
+        raise Exception("Multiple workflow config files found")
+    with open(workflow_config_files[0], "r") as f:
+        return json.load(f)
+
+
+def get_cached_job(job_name: str) -> dict:
+    workflow_config = get_workflow_config()
+    return workflow_config["cache_jobs"].get(job_name, {})
+
+
 def get_cves(pr_number, commit_sha):
     """
     Fetch Grype results from S3.
@@ -375,22 +392,34 @@ def get_cves(pr_number, commit_sha):
     If no results are available for download, returns ... (Ellipsis).
     """
     s3_client = boto3.client("s3", endpoint_url=os.getenv("S3_URL"))
-    s3_prefix = f"{pr_number}/{commit_sha}/grype/"
+    prefixes_to_check = {f"{pr_number}/{commit_sha}/grype/"}
 
-    results = []
+    cached_server_job = get_cached_job("Docker server image")
+    if cached_server_job:
+        prefixes_to_check.add(
+            f"{cached_server_job['pr_number']}/{cached_server_job['sha']}/grype/"
+        )
+    cached_keeper_job = get_cached_job("Docker keeper image")
+    if cached_keeper_job:
+        prefixes_to_check.add(
+            f"{cached_keeper_job['pr_number']}/{cached_keeper_job['sha']}/grype/"
+        )
 
-    response = s3_client.list_objects_v2(
-        Bucket=S3_BUCKET, Prefix=s3_prefix, Delimiter="/"
-    )
-    grype_result_dirs = [
-        content["Prefix"] for content in response.get("CommonPrefixes", [])
-    ]
+    grype_result_dirs = []
+    for s3_prefix in prefixes_to_check:
+        response = s3_client.list_objects_v2(
+            Bucket=S3_BUCKET, Prefix=s3_prefix, Delimiter="/"
+        )
+        grype_result_dirs.extend(
+            content["Prefix"] for content in response.get("CommonPrefixes", [])
+        )
 
     if len(grype_result_dirs) == 0:
         # We were asked to check the CVE data, but none was found,
         # maybe this is a preview report and grype results are not available yet
         return ...
 
+    results = []
     for path in grype_result_dirs:
         file_key = f"{path}result.json"
         file_response = s3_client.get_object(Bucket=S3_BUCKET, Key=file_key)

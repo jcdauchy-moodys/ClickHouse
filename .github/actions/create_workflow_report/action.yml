@@ -1,6 +1,9 @@
 name: Create and Upload Combined Report
 description: Create and upload a combined CI report
 inputs:
+  workflow_config:
+    description: "Workflow config"
+    required: true
   final:
     description: "Control whether the report is final or a preview"
     required: false
@@ -8,6 +11,14 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Create workflow config
+      shell: bash
+      run: |
+        mkdir -p ./ci/tmp
+        cat > ./ci/tmp/workflow_config.json << 'EOF'
+        ${{ inputs.workflow_config }}
+        EOF
+
     - name: Create and upload workflow report
       env:
         ACTIONS_RUN_URL: ${{ github.event.repository.html_url }}/actions/runs/${{ github.run_id }}
