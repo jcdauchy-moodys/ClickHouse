@@ -33,7 +33,7 @@ def get_commit_statuses(sha: str) -> pd.DataFrame:
         pd.DataFrame: DataFrame containing all statuses.
     """
     headers = {
-        "Authorization": f"token {os.getenv('GH_TOKEN')}",
+        "Authorization": f"token {GITHUB_TOKEN}",
         "Accept": "application/vnd.github.v3+json",
     }
 
@@ -102,7 +102,7 @@ def get_pr_info_from_number(pr_number: str) -> dict:
         dict: Dictionary containing PR information.
     """
     headers = {
-        "Authorization": f"token {os.getenv('GH_TOKEN')}",
+        "Authorization": f"token {GITHUB_TOKEN}",
         "Accept": "application/vnd.github.v3+json",
     }
 
@@ -125,7 +125,7 @@ def get_run_details(run_url: str) -> dict:
     run_id = run_url.split("/")[-1]
 
     headers = {
-        "Authorization": f"token {os.getenv('GH_TOKEN')}",
+        "Authorization": f"token {GITHUB_TOKEN}",
         "Accept": "application/vnd.github.v3+json",
     }
 
@@ -494,18 +494,24 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main():
-    args = parse_args()
-
-    if args.pr_number is None or args.commit_sha is None:
-        run_details = get_run_details(args.actions_run_url)
-        if args.pr_number is None:
+def create_workflow_report(
+    actions_run_url: str,
+    pr_number: int = None,
+    commit_sha: str = None,
+    no_upload: bool = False,
+    known_fails: str = None,
+    check_cves: bool = False,
+    mark_preview: bool = False,
+) -> str:
+    if pr_number is None or commit_sha is None:
+        run_details = get_run_details(actions_run_url)
+        if pr_number is None:
             if len(run_details["pull_requests"]) > 0:
-                args.pr_number = run_details["pull_requests"][0]["number"]
+                pr_number = run_details["pull_requests"][0]["number"]
             else:
-                args.pr_number = 0
-        if args.commit_sha is None:
-            args.commit_sha = run_details["head_commit"]["id"]
+                pr_number = 0
+        if commit_sha is None:
+            commit_sha = run_details["head_commit"]["id"]
 
     host = os.getenv(DATABASE_HOST_VAR)
     if not host:
@@ -531,45 +537,43 @@ def main():
         settings={"use_numpy": True},
     )
 
-    run_details = get_run_details(args.actions_run_url)
+    run_details = get_run_details(actions_run_url)
     branch_name = run_details.get("head_branch", "unknown branch")
 
     fail_results = {
-        "job_statuses": get_commit_statuses(args.commit_sha),
-        "checks_fails": get_checks_fails(db_client, args.commit_sha, branch_name),
+        "job_statuses": get_commit_statuses(commit_sha),
+        "checks_fails": get_checks_fails(db_client, commit_sha, branch_name),
         "checks_known_fails": [],
         "pr_new_fails": [],
-        "checks_errors": get_checks_errors(db_client, args.commit_sha, branch_name),
-        "regression_fails": get_regression_fails(db_client, args.actions_run_url),
+        "checks_errors": get_checks_errors(db_client, commit_sha, branch_name),
+        "regression_fails": get_regression_fails(db_client, actions_run_url),
         "docker_images_cves": (
-            [] if not args.cves else get_cves(args.pr_number, args.commit_sha)
+            [] if not check_cves else get_cves(pr_number, commit_sha)
         ),
     }
 
     # get_cves returns ... in the case where no Grype result files were found.
     # This might occur when run in preview mode.
-    cves_not_checked = not args.cves or (
-        args.mark_preview and fail_results["docker_images_cves"] is ...
-    )
+    cves_not_checked = not check_cves or fail_results["docker_images_cves"] is ...
 
-    if args.known_fails:
-        if not os.path.exists(args.known_fails):
-            print(f"Known fails file {args.known_fails} not found.")
+    if known_fails:
+        if not os.path.exists(known_fails):
+            print(f"Known fails file {known_fails} not found.")
             exit(1)
 
-        with open(args.known_fails) as f:
+        with open(known_fails) as f:
             known_fails = json.load(f)
 
         if known_fails:
             fail_results["checks_known_fails"] = get_checks_known_fails(
-                db_client, args.commit_sha, branch_name, known_fails
+                db_client, commit_sha, branch_name, known_fails
             )
 
-    if args.pr_number == 0:
+    if pr_number == 0:
         pr_info_html = f"Release ({branch_name})"
     else:
         try:
-            pr_info = get_pr_info_from_number(args.pr_number)
+            pr_info = get_pr_info_from_number(pr_number)
             pr_info_html = f"""<a href="https://github.com/{GITHUB_REPO}/pull/{pr_info["number"]}">
                     #{pr_info.get("number")} ({pr_info.get("base", {}).get('ref')} <- {pr_info.get("head", {}).get('ref')})  {pr_info.get("title")}
                     </a>"""
@@ -605,12 +609,12 @@ def main():
         "github_repo": GITHUB_REPO,
         "s3_bucket": S3_BUCKET,
         "pr_info_html": pr_info_html,
-        "pr_number": args.pr_number,
-        "workflow_id": args.actions_run_url.split("/")[-1],
-        "commit_sha": args.commit_sha,
-        "base_sha": "" if args.pr_number == 0 else pr_info.get("base", {}).get("sha"),
+        "pr_number": pr_number,
+        "workflow_id": actions_run_url.split("/")[-1],
+        "commit_sha": commit_sha,
+        "base_sha": "" if pr_number == 0 else pr_info.get("base", {}).get("sha"),
         "date": f"{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC",
-        "is_preview": args.mark_preview,
+        "is_preview": mark_preview,
         "counts": {
             "jobs_status": f"{sum(fail_results['job_statuses']['job_status'] != 'success')} fail/error",
             "checks_errors": len(fail_results["checks_errors"]),
@@ -618,9 +622,7 @@ def main():
             "regression_new_fails": len(fail_results["regression_fails"]),
             "cves": "N/A" if cves_not_checked else f"{high_cve_count} high/critical",
             "checks_known_fails": (
-                "N/A"
-                if not args.known_fails
-                else len(fail_results["checks_known_fails"])
+                "N/A" if not known_fails else len(fail_results["checks_known_fails"])
             ),
             "pr_new_fails": len(fail_results["pr_new_fails"]),
         },
@@ -641,7 +643,7 @@ def main():
         ),
         "checks_known_fails_html": (
             "<p>Not Checked</p>"
-            if not args.known_fails
+            if not known_fails
             else format_results_as_html_table(fail_results["checks_known_fails"])
         ),
         "new_fails_html": format_results_as_html_table(fail_results["pr_new_fails"]),
@@ -654,11 +656,11 @@ def main():
     report_path = Path(report_name)
     report_path.write_text(rendered_html, encoding="utf-8")
 
-    if args.no_upload:
+    if no_upload:
         print(f"Report saved to {report_path}")
         exit(0)
 
-    report_destination_key = f"{args.pr_number}/{args.commit_sha}/{report_name}"
+    report_destination_key = f"{pr_number}/{commit_sha}/{report_name}"
 
     # Upload the report to S3
     s3_client = boto3.client("s3", endpoint_url=os.getenv("S3_URL"))
@@ -673,7 +675,23 @@ def main():
     except NoCredentialsError:
         print("Credentials not available for S3 upload.")
 
-    print(f"https://s3.amazonaws.com/{S3_BUCKET}/" + report_destination_key)
+    return f"https://s3.amazonaws.com/{S3_BUCKET}/" + report_destination_key
+
+
+def main():
+    args = parse_args()
+
+    report_url = create_workflow_report(
+        args.actions_run_url,
+        args.pr_number,
+        args.commit_sha,
+        args.no_upload,
+        args.known_fails,
+        args.cves,
+        args.mark_preview,
+    )
+
+    print(report_url)
 
 
 if __name__ == "__main__":
