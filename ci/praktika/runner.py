@@ -516,8 +516,7 @@ class Runner:
 
             # Altinity workflow report
             cmd = f"./.github/actions/create_workflow_report/workflow_report_hook.sh"
-            Shell.check(cmd, strict=True)
-            workflow_report_url = os.getenv("REPORT_LINK")
+            workflow_report_url = Shell.get_output(cmd).splitlines()[-1]
             print(f"::notice ::Workflow report: {workflow_report_url}")
 
         return is_ok
