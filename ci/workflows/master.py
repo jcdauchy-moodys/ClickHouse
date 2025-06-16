@@ -72,11 +72,6 @@ workflow = Workflow.Config(
     post_hooks=[],
 )
 
-for job in workflow.jobs:
-    job.post_hooks.append(
-        "./.github/actions/create_workflow_report/workflow_report_hook.sh"
-    )
-
 WORKFLOWS = [
     workflow,
 ]

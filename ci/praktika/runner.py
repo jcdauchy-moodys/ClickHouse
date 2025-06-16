@@ -472,6 +472,10 @@ class Runner:
             print(f"Run html report hook")
             HtmlRunnerHooks.post_run(workflow, job, info_errors)
 
+            info = Info()
+            cmd = f"python3 .github/actions/create_workflow_report/create_workflow_report.py --mark-preview --known-fails tests/broken_tests.json --cves --actions-run-url {info.run_url} --pr-number {info.linked_pr_number} --commit-sha {info.sha}"
+            workflow_report_url = Shell.get_output(cmd)
+
         if job.name == Settings.FINISH_WORKFLOW_JOB_NAME and ci_db:
             # run after HtmlRunnerHooks.post_run(), when Workflow Result has up-to-date storage_usage data
             workflow_result = Result.from_fs(workflow.name)
@@ -513,6 +517,7 @@ class Runner:
         if workflow.enable_report:
             # to make it visible in GH Actions annotations
             print(f"::notice ::Job report: {report_url}")
+            print(f"::notice ::Workflow report: {workflow_report_url}")
 
         return is_ok
 
