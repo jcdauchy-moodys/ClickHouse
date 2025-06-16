@@ -392,7 +392,7 @@ def get_cves(pr_number, commit_sha):
     If no results are available for download, returns ... (Ellipsis).
     """
     s3_client = boto3.client("s3", endpoint_url=os.getenv("S3_URL"))
-    prefixes_to_check = {f"{pr_number}/{commit_sha}/grype/"}
+    prefixes_to_check = set()
 
     cached_server_job = get_cached_job("Docker server image")
     if cached_server_job:
@@ -405,14 +405,21 @@ def get_cves(pr_number, commit_sha):
             f"{cached_keeper_job['pr_number']}/{cached_keeper_job['sha']}/grype/"
         )
 
+    if not prefixes_to_check:
+        prefixes_to_check = {f"{pr_number}/{commit_sha}/grype/"}
+
     grype_result_dirs = []
     for s3_prefix in prefixes_to_check:
-        response = s3_client.list_objects_v2(
-            Bucket=S3_BUCKET, Prefix=s3_prefix, Delimiter="/"
-        )
-        grype_result_dirs.extend(
-            content["Prefix"] for content in response.get("CommonPrefixes", [])
-        )
+        try:
+            response = s3_client.list_objects_v2(
+                Bucket=S3_BUCKET, Prefix=s3_prefix, Delimiter="/"
+            )
+            grype_result_dirs.extend(
+                content["Prefix"] for content in response.get("CommonPrefixes", [])
+            )
+        except Exception as e:
+            print(f"Error listing S3 objects at {s3_prefix}: {e}")
+            continue
 
     if len(grype_result_dirs) == 0:
         # We were asked to check the CVE data, but none was found,
@@ -422,9 +429,13 @@ def get_cves(pr_number, commit_sha):
     results = []
     for path in grype_result_dirs:
         file_key = f"{path}result.json"
-        file_response = s3_client.get_object(Bucket=S3_BUCKET, Key=file_key)
-        content = file_response["Body"].read().decode("utf-8")
-        results.append(json.loads(content))
+        try:
+            file_response = s3_client.get_object(Bucket=S3_BUCKET, Key=file_key)
+            content = file_response["Body"].read().decode("utf-8")
+            results.append(json.loads(content))
+        except Exception as e:
+            print(f"Error getting S3 object at {file_key}: {e}")
+            continue
 
     rows = []
     for scan_result in results:
