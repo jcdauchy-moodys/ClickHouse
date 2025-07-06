@@ -26,29 +26,32 @@ class AltinityWorkflowTemplates:
           echo "Workflow Run Report: [View Report]($REPORT_LINK)" >> $GITHUB_STEP_SUMMARY
 """
     # Additional jobs
-    REGRESSION_HASH = "7f798b66f2d2acf18cd202d9a0f39ec64fbc062b"
+    REGRESSION_HASH = "36ae5e98d627bb18f821d4d72a552e127aeaedc8"
     ADDITIONAL_JOBS = r"""
 ##########################################################################################
 ##################################### ALTINITY JOBS ######################################
 ##########################################################################################
-  GrypeScan:
-    needs: [config_workflow, docker_server_image, docker_keeper_image]
-    if: ${{ !failure() && !cancelled() }}
+  GrypeScanServer:
+    needs: [config_workflow, docker_server_image]
+    if: ${{ !failure() && !cancelled() && !contains(fromJson(needs.config_workflow.outputs.data).cache_success_base64, 'RG9ja2VyIHNlcnZlciBpbWFnZQ==') }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - image: server
-            suffix: ''
-          - image: server
-            suffix: '-alpine'
-          - image: keeper
-            suffix: ''
+        suffix: ['', '-alpine']
     uses: ./.github/workflows/grype_scan.yml
     secrets: inherit
     with:
-      docker_image: altinityinfra/clickhouse-${{ matrix.image }}
+      docker_image: altinityinfra/clickhouse-server
+      version: ${{ fromJson(needs.config_workflow.outputs.data).custom_data.version.string }}
       tag-suffix: ${{ matrix.suffix }}
+  GrypeScanKeeper:
+      needs: [config_workflow,  docker_keeper_image]
+      if: ${{ !failure() && !cancelled() && !contains(fromJson(needs.config_workflow.outputs.data).cache_success_base64, 'RG9ja2VyIGtlZXBlciBpbWFnZQ==') }}
+      uses: ./.github/workflows/grype_scan.yml
+      secrets: inherit
+      with:
+        docker_image: altinityinfra/clickhouse-keeper
+        version: ${{ fromJson(needs.config_workflow.outputs.data).custom_data.version.string }}
 
   RegressionTestsRelease:
     needs: [config_workflow, build_amd_release]
@@ -102,7 +105,8 @@ class AltinityWorkflowTemplates:
       - SignAarch64
       - RegressionTestsRelease
       - RegressionTestsAarch64
-      - GrypeScan
+      - GrypeScanServer
+      - GrypeScanKeeper
     runs-on: [self-hosted, altinity-on-demand, altinity-style-checker-aarch64]
     steps:
       - name: Check out repository code
@@ -113,5 +117,6 @@ class AltinityWorkflowTemplates:
         if: ${{ !cancelled() }}
         uses: ./.github/actions/create_workflow_report
         with:
+          workflow_config: ${{ needs.config_workflow.outputs.data }}
           final: true
 """

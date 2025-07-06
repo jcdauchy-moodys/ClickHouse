@@ -5,7 +5,7 @@ name: MasterCI
 on:
   workflow_dispatch:
   push:
-    branches: ['antalya']
+    branches: ['antalya', 'releases/*']
 
 env:
   # Force the stdout and stderr streams to be unbuffered
@@ -4006,7 +4006,7 @@ jobs:
     secrets: inherit
     with:
       runner_type: altinity-on-demand, altinity-regression-tester
-      commit: 7f798b66f2d2acf18cd202d9a0f39ec64fbc062b
+      commit: 36ae5e98d627bb18f821d4d72a552e127aeaedc8
       arch: release
       build_sha: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
       timeout_minutes: 300
@@ -4018,7 +4018,7 @@ jobs:
     secrets: inherit
     with:
       runner_type: altinity-on-demand, altinity-regression-tester-aarch64
-      commit: 7f798b66f2d2acf18cd202d9a0f39ec64fbc062b
+      commit: 36ae5e98d627bb18f821d4d72a552e127aeaedc8
       arch: aarch64
       build_sha: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
       timeout_minutes: 300
