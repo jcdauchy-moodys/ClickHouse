@@ -113,10 +113,10 @@ ENV PYTHONPATH=".:./ci"
 # A directory for cache
 RUN mkdir /dev/shm/clickhouse
 
-COPY --from=clickhouse/cctools:859fb360308eb8ac47ad /opt/gdb /opt/gdb
+COPY --from=altinityinfra/cctools:4339f6fef3f07ff48734 /opt/gdb /opt/gdb
 ENV PATH="/opt/gdb/bin:${PATH}"
 
-COPY --from=clickhouse/cctools:859fb360308eb8ac47ad \
+COPY --from=altinityinfra/cctools:4339f6fef3f07ff48734 \
   /opt/openssl-fips/openssl.cnf \
   /opt/openssl-fips/fipsmodule.cnf \
   /opt/openssl-fips/fips.so \

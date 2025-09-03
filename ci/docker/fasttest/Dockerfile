@@ -74,7 +74,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* /var/cache/debconf /tmp/*
 
 # Note, libmpfr6 is also a requirement for gdb
-COPY --from=clickhouse/cctools:859fb360308eb8ac47ad /opt/gdb /opt/gdb
+COPY --from=altinityinfra/cctools:4339f6fef3f07ff48734 /opt/gdb /opt/gdb
 # Give suid to gdb to grant it attach permissions
 RUN chmod u+s /opt/gdb/bin/gdb
 ENV PATH="/opt/gdb/bin:${PATH}"
