@@ -32,6 +32,8 @@ RUN apt-get update -y \
         mysql-client=8.0* \
         ncdu \
         netcat-openbsd \
+        nodejs \
+        npm \
         odbcinst \
         openjdk-11-jre-headless \
         openssl \
