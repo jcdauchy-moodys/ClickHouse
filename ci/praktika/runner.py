@@ -515,19 +515,6 @@ class Runner:
             workflow_report_url = Shell.get_output(cmd).splitlines()[-1]
             print(f"::notice ::Workflow report: {workflow_report_url}")
 
-        if job.name == Settings.FINISH_WORKFLOW_JOB_NAME and ci_db:
-            # run after HtmlRunnerHooks.post_run(), when Workflow Result has up-to-date storage_usage data
-            workflow_result = Result.from_fs(workflow.name)
-            workflow_storage_usage = StorageUsage.from_dict(
-                workflow_result.ext.get("storage_usage", {})
-            )
-            workflow_compute_usage = ComputeUsage.from_dict(
-                workflow_result.ext.get("compute_usage", {})
-            )
-            if workflow_storage_usage:
-                print(
-                    "NOTE: storage_usage is found in workflow Result - insert into CIDB"
-
             if job.name == Settings.FINISH_WORKFLOW_JOB_NAME and ci_db:
                 # run after HtmlRunnerHooks.post_run(), when Workflow Result has up-to-date storage_usage data
                 workflow_storage_usage = StorageUsage.from_dict(
