@@ -142,10 +142,10 @@ def main():
         res = results[-1].is_ok()
 
     # NOTE(vnemkov): always getting pre-calcutated version from custom_data
-    version_dict = info.get_custom_data("version")
+    version_dict = info.get_kv_data("version")
 
     # if info.pr_number == 0 and info.is_push_event:
-    #    version_dict = info.get_custom_data("version")
+    #     version_dict = info.get_kv_data("version")
     # else:
     #     version_dict = CHVersion.get_current_version_as_dict()
 
