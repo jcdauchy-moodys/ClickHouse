@@ -8,13 +8,13 @@ from ci.workflows.pull_request import REGULAR_BUILD_NAMES
 workflow = Workflow.Config(
     name="MasterCI",
     event=Workflow.Event.PUSH,
-    branches=[BASE_BRANCH],
+    branches=[BASE_BRANCH, "releases/*", "antalya-*"],
     jobs=[
         *JobConfigs.tidy_build_arm_jobs,
         *JobConfigs.build_jobs,
         *[
             job.set_dependency(
-                REGULAR_BUILD_NAMES + [JobConfigs.tidy_build_arm_jobs[0].name]
+                REGULAR_BUILD_NAMES  # + [JobConfigs.tidy_build_jobs[0].name]  # NOTE (strtgbb): we don't run tidy build jobs
             )
             for job in JobConfigs.special_build_jobs
         ],
@@ -29,11 +29,11 @@ workflow = Workflow.Config(
         *JobConfigs.integration_test_jobs_non_required,
         *JobConfigs.functional_tests_jobs_coverage,
         *JobConfigs.stress_test_jobs,
-        *JobConfigs.stress_test_azure_master_jobs,
+        # *JobConfigs.stress_test_azure_master_jobs, # NOTE (strtgbb): disabled due to ASAN build failure
         *JobConfigs.ast_fuzzer_jobs,
         *JobConfigs.buzz_fuzzer_jobs,
-        *JobConfigs.performance_comparison_with_master_head_jobs,
-        *JobConfigs.performance_comparison_with_release_base_jobs,
+        # *JobConfigs.performance_comparison_with_master_head_jobs, # NOTE (strtgbb): fails due to GH secrets not being handled properly
+        # *JobConfigs.performance_comparison_with_release_base_jobs,
         *JobConfigs.clickbench_master_jobs,
         *JobConfigs.sqlancer_master_jobs,
         JobConfigs.sqltest_master_job,
@@ -51,7 +51,7 @@ workflow = Workflow.Config(
     enable_dockers_manifest_merge=True,
     set_latest_for_docker_merged_manifest=True,
     secrets=SECRETS,
-    enable_job_filtering_by_changes=True,
+    enable_job_filtering_by_changes=False,
     enable_cache=True,
     enable_report=True,
     enable_cidb=True,
@@ -59,7 +59,7 @@ workflow = Workflow.Config(
     pre_hooks=[
         "python3 ./ci/jobs/scripts/workflow_hooks/store_data.py",
         "python3 ./ci/jobs/scripts/workflow_hooks/version_log.py",
-        "python3 ./ci/jobs/scripts/workflow_hooks/merge_sync_pr.py",
+        # "python3 ./ci/jobs/scripts/workflow_hooks/merge_sync_pr.py", # NOTE (strtgbb): we don't do this
     ],
     workflow_filter_hooks=[should_skip_job],
     post_hooks=[],

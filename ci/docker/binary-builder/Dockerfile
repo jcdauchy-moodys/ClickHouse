@@ -1,6 +1,6 @@
-# docker build -t clickhouse/binary-builder .
+# docker build -t altinityinfra/binary-builder .
 ARG FROM_TAG
-FROM clickhouse/fasttest:$FROM_TAG
+FROM altinityinfra/fasttest:$FROM_TAG
 ENV CC=clang-${LLVM_VERSION}
 ENV CXX=clang++-${LLVM_VERSION}
 
