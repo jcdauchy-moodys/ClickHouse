@@ -1,5 +1,5 @@
 # rebuild in #33610
-# docker build -t clickhouse/test-base .
+# docker build -t altinityinfra/test-base .
 FROM ubuntu:22.04
 
 # ARG for quick switch to a given ubuntu mirror
