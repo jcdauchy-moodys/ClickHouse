@@ -409,7 +409,7 @@ class JobConfigs:
         ),
         Job.ParamSet(
             parameter="amd_debug, AsyncInsert, s3 storage, sequential",
-            runs_on=RunnerLabels.AMD_SMALL,
+            runs_on=RunnerLabels.FUNC_TESTER_AMD,
             requires=[ArtifactNames.CH_AMD_DEBUG],
         ),
         Job.ParamSet(
@@ -419,7 +419,7 @@ class JobConfigs:
         ),
         Job.ParamSet(
             parameter="amd_debug, sequential",
-            runs_on=RunnerLabels.AMD_SMALL,
+            runs_on=RunnerLabels.FUNC_TESTER_AMD,
             requires=[ArtifactNames.CH_AMD_DEBUG],
         ),
         *[
@@ -475,7 +475,7 @@ class JobConfigs:
         ),
         Job.ParamSet(
             parameter="amd_debug, distributed plan, s3 storage, sequential",
-            runs_on=RunnerLabels.AMD_SMALL,
+            runs_on=RunnerLabels.FUNC_TESTER_AMD,
             requires=[ArtifactNames.CH_AMD_DEBUG],
         ),
         Job.ParamSet(
@@ -499,7 +499,7 @@ class JobConfigs:
         ),
         Job.ParamSet(
             parameter="arm_binary, sequential",
-            runs_on=RunnerLabels.ARM_SMALL,
+            runs_on=RunnerLabels.FUNC_TESTER_ARM,
             requires=[ArtifactNames.CH_ARM_BINARY],
         ),
     )
@@ -513,7 +513,7 @@ class JobConfigs:
         ),
         Job.ParamSet(
             parameter=f"arm_coverage, sequential",
-            runs_on=RunnerLabels.ARM_SMALL_MEM,
+            runs_on=RunnerLabels.FUNC_TESTER_ARM,
             requires=[ArtifactNames.CH_COV_BIN],
         ),
     )

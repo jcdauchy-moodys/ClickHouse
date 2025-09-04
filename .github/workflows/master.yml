@@ -2019,7 +2019,7 @@ jobs:
           fi
 
   stateless_tests_amd_debug_asyncinsert_s3_storage_sequential:
-    runs-on: [self-hosted, altinity-on-demand, altinity-style-checker]
+    runs-on: [self-hosted, altinity-on-demand, altinity-func-tester]
     needs: [config_workflow, dockers_build_amd, dockers_build_arm, dockers_build_multiplatform_manifest, build_amd_debug]
     if: ${{ !failure() && !cancelled() && !contains(fromJson(needs.config_workflow.outputs.data).cache_success_base64, 'U3RhdGVsZXNzIHRlc3RzIChhbWRfZGVidWcsIEFzeW5jSW5zZXJ0LCBzMyBzdG9yYWdlLCBzZXF1ZW50aWFsKQ==') }}
     name: "Stateless tests (amd_debug, AsyncInsert, s3 storage, sequential)"
@@ -2109,7 +2109,7 @@ jobs:
           fi
 
   stateless_tests_amd_debug_sequential:
-    runs-on: [self-hosted, altinity-on-demand, altinity-style-checker]
+    runs-on: [self-hosted, altinity-on-demand, altinity-func-tester]
     needs: [config_workflow, dockers_build_amd, dockers_build_arm, dockers_build_multiplatform_manifest, build_amd_debug]
     if: ${{ !failure() && !cancelled() && !contains(fromJson(needs.config_workflow.outputs.data).cache_success_base64, 'U3RhdGVsZXNzIHRlc3RzIChhbWRfZGVidWcsIHNlcXVlbnRpYWwp') }}
     name: "Stateless tests (amd_debug, sequential)"
@@ -2649,7 +2649,7 @@ jobs:
           fi
 
   stateless_tests_amd_debug_distributed_plan_s3_storage_sequential:
-    runs-on: [self-hosted, altinity-on-demand, altinity-style-checker]
+    runs-on: [self-hosted, altinity-on-demand, altinity-func-tester]
     needs: [config_workflow, dockers_build_amd, dockers_build_arm, dockers_build_multiplatform_manifest, build_amd_debug]
     if: ${{ !failure() && !cancelled() && !contains(fromJson(needs.config_workflow.outputs.data).cache_success_base64, 'U3RhdGVsZXNzIHRlc3RzIChhbWRfZGVidWcsIGRpc3RyaWJ1dGVkIHBsYW4sIHMzIHN0b3JhZ2UsIHNlcXVlbnRpYWwp') }}
     name: "Stateless tests (amd_debug, distributed plan, s3 storage, sequential)"
@@ -2874,7 +2874,7 @@ jobs:
           fi
 
   stateless_tests_arm_binary_sequential:
-    runs-on: [self-hosted, altinity-on-demand, altinity-style-checker-aarch64]
+    runs-on: [self-hosted, altinity-on-demand, altinity-func-tester-aarch64]
     needs: [config_workflow, dockers_build_amd, dockers_build_arm, dockers_build_multiplatform_manifest, build_arm_binary]
     if: ${{ !failure() && !cancelled() && !contains(fromJson(needs.config_workflow.outputs.data).cache_success_base64, 'U3RhdGVsZXNzIHRlc3RzIChhcm1fYmluYXJ5LCBzZXF1ZW50aWFsKQ==') }}
     name: "Stateless tests (arm_binary, sequential)"
@@ -3909,7 +3909,7 @@ jobs:
           fi
 
   stateless_tests_arm_coverage_sequential:
-    runs-on: [self-hosted, altinity-on-demand, altinity-style-checker-aarch64]
+    runs-on: [self-hosted, altinity-on-demand, altinity-func-tester-aarch64]
     needs: [config_workflow, dockers_build_amd, dockers_build_arm, dockers_build_multiplatform_manifest, build_arm_coverage]
     if: ${{ !failure() && !cancelled() && !contains(fromJson(needs.config_workflow.outputs.data).cache_success_base64, 'U3RhdGVsZXNzIHRlc3RzIChhcm1fY292ZXJhZ2UsIHNlcXVlbnRpYWwp') }}
     name: "Stateless tests (arm_coverage, sequential)"
