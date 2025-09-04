@@ -42,7 +42,7 @@ RUN pip3 --no-cache-dir install -r requirements.txt
 
 COPY run.sh /
 
-COPY --from=altinityinfra/cctools:4339f6fef3f07ff48734 /opt/gdb /opt/gdb
+COPY --from=altinityinfra/cctools:7c093c1cde57d744be57 /opt/gdb /opt/gdb
 ENV PATH="/opt/gdb/bin:${PATH}"
 
 # aws cli to acquire secrets and params from ssm

@@ -6,8 +6,8 @@ from ci.jobs.scripts.docker_image import DockerImage
 from ci.praktika.result import Result
 from ci.praktika.utils import Shell, Utils
 
-RPM_IMAGE = "clickhouse/install-rpm-test"
-DEB_IMAGE = "clickhouse/install-deb-test"
+RPM_IMAGE = "altinityinfra/install-rpm-test"
+DEB_IMAGE = "altinityinfra/install-deb-test"
 REPO_PATH = Utils.cwd()
 TEMP_PATH = Path(f"{REPO_PATH}/ci/tmp/")
 

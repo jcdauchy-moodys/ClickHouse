@@ -301,7 +301,7 @@ def main():
             f"prof_active:true,prof_prefix:{temp_dir}/jemalloc_profiles/clickhouse.jemalloc"
         )
 
-        commands.append(configure_log_export)
+        # commands.append(configure_log_export)
 
         results.append(
             Result.from_commands_run(name="Install ClickHouse", command=commands)

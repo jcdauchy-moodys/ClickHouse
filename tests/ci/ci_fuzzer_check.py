@@ -25,7 +25,7 @@ def get_run_command(
     )
     envs = [
         f"-e FUZZER_TO_RUN='{fuzzer_name}'",
-        f"-e BASE_BRANCH='{pr_info.base_ref}'",
+        f"-e BASE_BRANCH='{PRInfo().base_ref}'",
     ]
 
     env_str = " ".join(envs)
