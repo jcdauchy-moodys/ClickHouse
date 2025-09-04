@@ -117,7 +117,7 @@ class Runner:
         print("Read GH Environment")
         env = _Environment.from_env()
         try:
-            version_string = Info().get_custom_data("version")['string']
+            version_string = Info().get_kv_data("version")['string']
             os.environ["CLICKHOUSE_VERSION_STRING"] = version_string
             env.CLICKHOUSE_VERSION_STRING = version_string
         except Exception as e:
