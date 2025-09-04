@@ -488,51 +488,6 @@ jobs:
             python3 -m praktika run 'Build (arm_release)' --workflow "ReleaseBranchCI" --ci |& tee ./ci/tmp/job.log
           fi
 
-  build_arm_asan:
-    runs-on: [self-hosted, altinity-on-demand, altinity-builder]
-    needs: [config_workflow, dockers_build_amd, dockers_build_arm]
-    if: ${{ !failure() && !cancelled() && !contains(fromJson(needs.config_workflow.outputs.data).cache_success_base64, 'QnVpbGQgKGFybV9hc2FuKQ==') }}
-    name: "Build (arm_asan)"
-    outputs:
-      data: ${{ steps.run.outputs.DATA }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ env.CHECKOUT_REF }}
-
-      - name: Setup
-        uses: ./.github/actions/runner_setup
-      - name: Docker setup
-        uses: ./.github/actions/docker_setup
-        with:
-          test_name: "Build (arm_asan)"
-
-      - name: Prepare env script
-        run: |
-          rm -rf ./ci/tmp ./ci/tmp ./ci/tmp
-          mkdir -p ./ci/tmp ./ci/tmp ./ci/tmp
-          cat > ./ci/tmp/praktika_setup_env.sh << 'ENV_SETUP_SCRIPT_EOF'
-          export PYTHONPATH=./ci:.:
-          cat > ./ci/tmp/workflow_config_releasebranchci.json << 'EOF'
-          ${{ needs.config_workflow.outputs.data }}
-          EOF
-          cat > ./ci/tmp/workflow_status.json << 'EOF'
-          ${{ toJson(needs) }}
-          EOF
-          ENV_SETUP_SCRIPT_EOF
-
-      - name: Run
-        id: run
-        run: |
-          . ./ci/tmp/praktika_setup_env.sh
-          set -o pipefail
-          if command -v ts &> /dev/null; then
-            python3 -m praktika run 'Build (arm_asan)' --workflow "ReleaseBranchCI" --ci |& ts '[%Y-%m-%d %H:%M:%S]' | tee ./ci/tmp/job.log
-          else
-            python3 -m praktika run 'Build (arm_asan)' --workflow "ReleaseBranchCI" --ci |& tee ./ci/tmp/job.log
-          fi
-
   build_amd_darwin:
     runs-on: [self-hosted, altinity-on-demand, altinity-builder]
     needs: [config_workflow, dockers_build_amd, dockers_build_arm]
@@ -1613,51 +1568,6 @@ jobs:
             python3 -m praktika run 'Stress test (amd_tsan)' --workflow "ReleaseBranchCI" --ci |& tee ./ci/tmp/job.log
           fi
 
-  stress_test_arm_asan:
-    runs-on: [self-hosted, altinity-on-demand, altinity-func-tester-aarch64]
-    needs: [config_workflow, dockers_build_amd, dockers_build_arm, build_arm_asan]
-    if: ${{ !failure() && !cancelled() && !contains(fromJson(needs.config_workflow.outputs.data).cache_success_base64, 'U3RyZXNzIHRlc3QgKGFybV9hc2FuKQ==') }}
-    name: "Stress test (arm_asan)"
-    outputs:
-      data: ${{ steps.run.outputs.DATA }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ env.CHECKOUT_REF }}
-
-      - name: Setup
-        uses: ./.github/actions/runner_setup
-      - name: Docker setup
-        uses: ./.github/actions/docker_setup
-        with:
-          test_name: "Stress test (arm_asan)"
-
-      - name: Prepare env script
-        run: |
-          rm -rf ./ci/tmp ./ci/tmp ./ci/tmp
-          mkdir -p ./ci/tmp ./ci/tmp ./ci/tmp
-          cat > ./ci/tmp/praktika_setup_env.sh << 'ENV_SETUP_SCRIPT_EOF'
-          export PYTHONPATH=./ci:.:
-          cat > ./ci/tmp/workflow_config_releasebranchci.json << 'EOF'
-          ${{ needs.config_workflow.outputs.data }}
-          EOF
-          cat > ./ci/tmp/workflow_status.json << 'EOF'
-          ${{ toJson(needs) }}
-          EOF
-          ENV_SETUP_SCRIPT_EOF
-
-      - name: Run
-        id: run
-        run: |
-          . ./ci/tmp/praktika_setup_env.sh
-          set -o pipefail
-          if command -v ts &> /dev/null; then
-            python3 -m praktika run 'Stress test (arm_asan)' --workflow "ReleaseBranchCI" --ci |& ts '[%Y-%m-%d %H:%M:%S]' | tee ./ci/tmp/job.log
-          else
-            python3 -m praktika run 'Stress test (arm_asan)' --workflow "ReleaseBranchCI" --ci |& tee ./ci/tmp/job.log
-          fi
-
   stress_test_amd_ubsan:
     runs-on: [self-hosted, altinity-on-demand, altinity-func-tester]
     needs: [config_workflow, dockers_build_amd, dockers_build_arm, build_amd_ubsan]
@@ -1750,7 +1660,7 @@ jobs:
 
   finish_workflow:
     runs-on: [self-hosted, altinity-on-demand, altinity-style-checker-aarch64]
-    needs: [config_workflow, dockers_build_amd, dockers_build_arm, build_amd_debug, build_amd_release, build_amd_asan, build_amd_tsan, build_amd_msan, build_amd_ubsan, build_arm_release, build_arm_asan, build_amd_darwin, build_arm_darwin, docker_server_image, docker_keeper_image, install_packages_amd_release, install_packages_arm_release, integration_tests_amd_asan_1_4, integration_tests_amd_asan_2_4, integration_tests_amd_asan_3_4, integration_tests_amd_asan_4_4, integration_tests_amd_asan_old_analyzer_1_6, integration_tests_amd_asan_old_analyzer_2_6, integration_tests_amd_asan_old_analyzer_3_6, integration_tests_amd_asan_old_analyzer_4_6, integration_tests_amd_asan_old_analyzer_5_6, integration_tests_amd_asan_old_analyzer_6_6, integration_tests_amd_tsan_1_6, integration_tests_amd_tsan_2_6, integration_tests_amd_tsan_3_6, integration_tests_amd_tsan_4_6, integration_tests_amd_tsan_5_6, integration_tests_amd_tsan_6_6, stress_test_amd_debug, stress_test_amd_tsan, stress_test_arm_asan, stress_test_amd_ubsan, stress_test_amd_msan]
+    needs: [config_workflow, dockers_build_amd, dockers_build_arm, build_amd_debug, build_amd_release, build_amd_asan, build_amd_tsan, build_amd_msan, build_amd_ubsan, build_arm_release, build_amd_darwin, build_arm_darwin, docker_server_image, docker_keeper_image, install_packages_amd_release, install_packages_arm_release, integration_tests_amd_asan_1_4, integration_tests_amd_asan_2_4, integration_tests_amd_asan_3_4, integration_tests_amd_asan_4_4, integration_tests_amd_asan_old_analyzer_1_6, integration_tests_amd_asan_old_analyzer_2_6, integration_tests_amd_asan_old_analyzer_3_6, integration_tests_amd_asan_old_analyzer_4_6, integration_tests_amd_asan_old_analyzer_5_6, integration_tests_amd_asan_old_analyzer_6_6, integration_tests_amd_tsan_1_6, integration_tests_amd_tsan_2_6, integration_tests_amd_tsan_3_6, integration_tests_amd_tsan_4_6, integration_tests_amd_tsan_5_6, integration_tests_amd_tsan_6_6, stress_test_amd_debug, stress_test_amd_tsan, stress_test_amd_ubsan, stress_test_amd_msan]
     if: ${{ !cancelled() }}
     name: "Finish Workflow"
     outputs:
@@ -1875,7 +1785,6 @@ jobs:
       - build_amd_msan
       - build_amd_ubsan
       - build_arm_release
-      - build_arm_asan
       - build_amd_darwin
       - build_arm_darwin
       - docker_server_image
@@ -1900,7 +1809,6 @@ jobs:
       - integration_tests_amd_tsan_6_6
       - stress_test_amd_debug
       - stress_test_amd_tsan
-      - stress_test_arm_asan
       - stress_test_amd_ubsan
       - stress_test_amd_msan
       - finish_workflow

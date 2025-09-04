@@ -195,14 +195,15 @@ class JobConfigs:
             ],
             runs_on=RunnerLabels.BUILDER_ARM,
         ),
-        Job.ParamSet(
-            parameter=BuildTypes.ARM_ASAN,
-            provides=[
-                ArtifactNames.CH_ARM_ASAN,
-                ArtifactNames.DEB_ARM_ASAN,
-            ],
-            runs_on=RunnerLabels.BUILDER_ARM,
-        ),
+        # NOTE (strtgbb): This build is difficult to cross-compile
+        # Job.ParamSet(
+        #     parameter=BuildTypes.ARM_ASAN,
+        #     provides=[
+        #         ArtifactNames.CH_ARM_ASAN,
+        #         ArtifactNames.DEB_ARM_ASAN,
+        #     ],
+        #     runs_on=RunnerLabels.BUILDER_ARM,
+        # ),
         Job.ParamSet(
             parameter=BuildTypes.ARM_COVERAGE,
             provides=[
@@ -593,11 +594,11 @@ class JobConfigs:
             runs_on=RunnerLabels.FUNC_TESTER_AMD,
             requires=["Build (amd_tsan)"],
         ),
-        Job.ParamSet(
-            parameter="arm_asan",
-            runs_on=RunnerLabels.FUNC_TESTER_ARM,
-            requires=["Build (arm_asan)"],
-        ),
+        # Job.ParamSet(
+        #     parameter="arm_asan",
+        #     runs_on=RunnerLabels.FUNC_TESTER_ARM,
+        #     requires=["Build (arm_asan)"],
+        # ),
         Job.ParamSet(
             parameter="amd_ubsan",
             runs_on=RunnerLabels.FUNC_TESTER_AMD,
@@ -821,11 +822,11 @@ class JobConfigs:
             runs_on=RunnerLabels.FUNC_TESTER_AMD,
             requires=[ArtifactNames.CH_AMD_DEBUG],
         ),
-        Job.ParamSet(
-            parameter="arm_asan",
-            runs_on=RunnerLabels.FUNC_TESTER_ARM,
-            requires=[ArtifactNames.CH_ARM_ASAN],
-        ),
+        # Job.ParamSet(
+        #     parameter="arm_asan",
+        #     runs_on=RunnerLabels.FUNC_TESTER_ARM,
+        #     requires=[ArtifactNames.CH_ARM_ASAN],
+        # ),
         Job.ParamSet(
             parameter="amd_tsan",
             runs_on=RunnerLabels.FUNC_TESTER_AMD,
@@ -860,11 +861,11 @@ class JobConfigs:
             runs_on=RunnerLabels.FUNC_TESTER_AMD,
             requires=[ArtifactNames.CH_AMD_DEBUG],
         ),
-        Job.ParamSet(
-            parameter="arm_asan",
-            runs_on=RunnerLabels.FUNC_TESTER_ARM,
-            requires=[ArtifactNames.CH_ARM_ASAN],
-        ),
+        # Job.ParamSet(
+        #     parameter="arm_asan",
+        #     runs_on=RunnerLabels.FUNC_TESTER_ARM,
+        #     requires=[ArtifactNames.CH_ARM_ASAN],
+        # ),
         Job.ParamSet(
             parameter="amd_tsan",
             runs_on=RunnerLabels.FUNC_TESTER_AMD,
