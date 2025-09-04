@@ -1,4 +1,4 @@
-# docker build -t clickhouse/integration-tests-runner .
+# docker build -t altinityinfra/integration-tests-runner .
 ARG FROM_TAG=latest
 FROM altinityinfra/test-base:$FROM_TAG
 
