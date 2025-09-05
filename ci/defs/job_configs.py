@@ -389,7 +389,7 @@ class JobConfigs:
         ),
         Job.ParamSet(
             parameter="amd_binary, old analyzer, s3 storage, DatabaseReplicated, sequential",
-            runs_on=RunnerLabels.AMD_SMALL,
+            runs_on=RunnerLabels.FUNC_TESTER_AMD,
             requires=[ArtifactNames.CH_AMD_BINARY],
         ),
         Job.ParamSet(

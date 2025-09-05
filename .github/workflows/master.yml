@@ -1344,7 +1344,7 @@ jobs:
           fi
 
   stateless_tests_amd_binary_old_analyzer_s3_storage_databasereplicated_sequential:
-    runs-on: [self-hosted, altinity-on-demand, altinity-style-checker]
+    runs-on: [self-hosted, altinity-on-demand, altinity-func-tester]
     needs: [config_workflow, dockers_build_amd, dockers_build_arm, dockers_build_multiplatform_manifest, build_amd_binary]
     if: ${{ !failure() && !cancelled() && !contains(fromJson(needs.config_workflow.outputs.data).cache_success_base64, 'U3RhdGVsZXNzIHRlc3RzIChhbWRfYmluYXJ5LCBvbGQgYW5hbHl6ZXIsIHMzIHN0b3JhZ2UsIERhdGFiYXNlUmVwbGljYXRlZCwgc2VxdWVudGlhbCk=') }}
     name: "Stateless tests (amd_binary, old analyzer, s3 storage, DatabaseReplicated, sequential)"
