@@ -48,6 +48,10 @@
         "reason": "INVESTIGATE - S3 sometimes unreachable",
         "message": "Error interacting with object store: Generic S3 error: Error performing GET"
     },
+    "03441_deltalake_clickhouse_virtual_columns": {
+        "reason": "INVESTIGATE - S3 sometimes unreachable",
+        "message": "Error interacting with object store: Generic S3 error: Error performing GET"
+    },
     "03443_shared_storage_snapshots": {
         "reason": "INVESTIGATE - Unstable?"
     },
