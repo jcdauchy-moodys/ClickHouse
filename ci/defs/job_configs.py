@@ -303,7 +303,7 @@ class JobConfigs:
     ).parametrize(
         Job.ParamSet(
             parameter="amd_debug",
-            runs_on=RunnerLabels.STYLE_CHECK_AMD,
+            runs_on=RunnerLabels.FUNC_TESTER_AMD,
             requires=[
                 ArtifactNames.DEB_AMD_DEBUG,
                 ArtifactNames.CH_AMD_DEBUG,
@@ -324,7 +324,7 @@ class JobConfigs:
     ).parametrize(
         Job.ParamSet(
             parameter="amd_release",
-            runs_on=RunnerLabels.STYLE_CHECK_AMD,
+            runs_on=RunnerLabels.FUNC_TESTER_AMD,
             requires=[
                 ArtifactNames.DEB_AMD_RELEASE,
                 ArtifactNames.RPM_AMD_RELEASE,
@@ -334,7 +334,7 @@ class JobConfigs:
         ),
         Job.ParamSet(
             parameter="arm_release",
-            runs_on=RunnerLabels.STYLE_CHECK_ARM,
+            runs_on=RunnerLabels.FUNC_TESTER_ARM,
             requires=[
                 ArtifactNames.DEB_ARM_RELEASE,
                 ArtifactNames.RPM_ARM_RELEASE,
