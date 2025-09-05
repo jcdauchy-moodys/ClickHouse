@@ -525,7 +525,7 @@ try
     }
 
     /// Advice the user to send it manually.
-    if (std::string_view(VERSION_OFFICIAL).contains("official build"))
+    if (std::string_view(VERSION_OFFICIAL).contains("altinity build"))
     {
         /// Approximate support period, upper bound.
         if (time(nullptr) - makeDate(DateLUT::instance(), 2000 + VERSION_MAJOR, VERSION_MINOR, 1) < (365 + 30) * 86400)
@@ -534,7 +534,7 @@ try
         }
         else
         {
-            LOG_FATAL(log, "ClickHouse version {} is old and should be upgraded to the latest version.", VERSION_STRING);
+            // LOG_FATAL(log, "ClickHouse version {} is old and should be upgraded to the latest version.", VERSION_STRING);
         }
     }
 
