@@ -121,10 +121,6 @@
         "reason": "INVESTIGATE - Timeout. Unstable?",
         "message": "Timeout! Killing process group"
     },
-    "02760_dictionaries_memory": {
-        "reason": "INVESTIGATE - Timeout. Unstable?",
-        "message": "Timeout! Killing process group"
-    },
     "02435_rollback_cancelled_queries": {
         "reason": "INVESTIGATE - Unstable?",
         "message": "There is no current transaction. (INVALID_TRANSACTION)"
@@ -159,6 +155,58 @@
         "reason": "INVESTIGATE - Internal test timeout",
         "message": "FutureTimeoutError"
     },
+    "03305_mergine_aggregated_filter_push_down": {
+        "reason": "INVESTIGATE - Timeout on tsan",
+        "message": "Timeout! Processes left in process group"
+    },
+    "02760_dictionaries_memory": {
+        "reason": "INVESTIGATE - Timeout on tsan",
+        "message": "Timeout! Processes left in process group"
+    },
+    "03532_json_dynamic_updates": {
+        "reason": "INVESTIGATE - Timeout on tsan",
+        "message": "Timeout! Processes left in process group"
+    },
+    "03094_grouparraysorted_memory": {
+        "reason": "INVESTIGATE - Timeout on tsan",
+        "message": "Timeout! Processes left in process group"
+    },
+    "02784_parallel_replicas_automatic_decision": {
+        "reason": "INVESTIGATE - Timeout on tsan",
+        "message": "Timeout! Processes left in process group"
+    },
+    "01184_long_insert_values_huge_strings": {
+        "reason": "INVESTIGATE - Timeout on tsan",
+        "message": "Timeout! Processes left in process group"
+    },
+    "02389_analyzer_nested_lambda": {
+        "reason": "INVESTIGATE - Timeout on tsan",
+        "message": "Timeout! Processes left in process group"
+    },
+    "02581_share_big_sets_between_mutation_tasks_with_storage_set": {
+        "reason": "INVESTIGATE - Timeout on tsan",
+        "message": "Timeout! Processes left in process group"
+    },
+    "00596_limit_on_expanded_ast": {
+        "reason": "INVESTIGATE - Timeout on tsan",
+        "message": "Timeout! Processes left in process group"
+    },
+    "00377_shard_group_uniq_array_of_string_array": {
+        "reason": "INVESTIGATE - Timeout on tsan",
+        "message": "Timeout! Processes left in process group"
+    },
+    "01799_long_uniq_theta_sketch": {
+        "reason": "INVESTIGATE - Timeout on tsan",
+        "message": "Timeout! Processes left in process group"
+    },
+    "02935_parallel_replicas_settings": {
+        "reason": "INVESTIGATE - Timeout on tsan",
+        "message": "Timeout exceeded (180 s) while flushing system log"
+    },
+    "00284_external_aggregation": {
+        "reason": "INVESTIGATE - Timeout in query on tsan",
+        "message": "DB::Exception: Timeout exceeded"
+    },
     "test_storage_rabbitmq/test.py::test_rabbitmq_sharding_between_queues_publish": {
         "reason": "INVESTIGATE - Unstable?"
     },
@@ -180,5 +228,11 @@
     },
     "test_overcommit_tracker/test.py::test_user_overcommit": {
         "reason": "INVESTIGATE - Unstable?"
+    },
+    "test_storage_s3_queue/test_0.py::test_streaming_to_many_views[unordered]": {
+        "reason": "INVESTIGATE: Broken test?"
+    },
+    "test_storage_s3_queue/test_0.py::test_streaming_to_many_views[ordered]": {
+        "reason": "INVESTIGATE: Broken test?"
     }
 }
