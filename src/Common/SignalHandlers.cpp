@@ -530,7 +530,7 @@ try
         /// Approximate support period, upper bound.
         if (time(nullptr) - makeDate(DateLUT::instance(), 2000 + VERSION_MAJOR, VERSION_MINOR, 1) < (365 + 30) * 86400)
         {
-            LOG_FATAL(log, "Report this error to https://github.com/ClickHouse/ClickHouse/issues");
+            LOG_FATAL(log, "Report this error to https://github.com/Altinity/ClickHouse/issues");
         }
         else
         {
