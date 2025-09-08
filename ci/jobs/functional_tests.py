@@ -372,7 +372,7 @@ def main():
 
         # if not info.is_local_run:
         #     CH.stop_log_exports()
-        ft_res_processor = FTResultsProcessor(wd=temp_dir)
+        ft_res_processor = FTResultsProcessor(wd=temp_dir, test_options=test_options)
         results.append(ft_res_processor.run())
         debug_files += ft_res_processor.debug_files
         test_result = results[-1]
