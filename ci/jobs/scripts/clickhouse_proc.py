@@ -939,8 +939,8 @@ quit
             "error_log",
             "query_metric_log",
             "part_log",
-            "minio_audit_logs",
-            "minio_server_logs",
+            # "minio_audit_logs", # NOTE (strtgbb): we do not use these logs
+            # "minio_server_logs",
         ]
 
         command_args = self.LOGS_SAVER_CLIENT_OPTIONS
