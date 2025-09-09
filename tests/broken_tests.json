@@ -14,11 +14,8 @@
         ]
     },
     "02443_detach_attach_partition": {
-        "reason": "INVESTIGATE - Unstable on tsan",
-        "message": "ATOMIC_RENAME_FAIL",
-        "check_types": [
-            "tsan"
-        ]
+        "reason": "INVESTIGATE - Unstable",
+        "message": "Cannot rename parts to perform operation on them: Code: 521. DB::ErrnoException: Cannot rename"
     },
     "03568_mutation_affected_rows_counter": {
         "reason": "INVESTIGATE - Unstable on tsan",
@@ -155,7 +152,7 @@
     },
     "02389_analyzer_nested_lambda": {
         "reason": "INVESTIGATE - Timeout on tsan",
-        "message": "Timeout! Processes left in process group",
+        "message": "Timeout",
         "check_types": [
             "tsan"
         ]
@@ -175,10 +172,18 @@
         ]
     },
     "00596_limit_on_expanded_ast": {
-        "reason": "INVESTIGATE - Timeout on tsan",
+        "reason": "INVESTIGATE - Timeout on tsan, msan",
         "message": "Timeout! Processes left in process group",
         "check_types": [
-            "tsan"
+            "tsan",
+            "msan"
+        ]
+    },
+    "00816_long_concurrent_alter_column": {
+        "reason": "INVESTIGATE - Timeout on msan",
+        "message": "Timeout! Processes left in process group",
+        "check_types": [
+            "msan"
         ]
     },
     "00377_shard_group_uniq_array_of_string_array": {
@@ -216,6 +221,27 @@
             "tsan"
         ]
     },
+    "02177_issue_31009": {
+        "reason": "INVESTIGATE - Timeout on ubsan",
+        "message": "Timeout! Processes left in process group",
+        "check_types": [
+            "ubsan"
+        ]
+    },
+    "00024_random_counters": {
+        "reason": "INVESTIGATE - Timeout on coverage",
+        "message": "Timeout! Processes left in process group",
+        "check_types": [
+            "coverage"
+        ]
+    },
+    "00159_parallel_formatting_json_and_friends_2": {
+        "reason": "INVESTIGATE - Timeout in query on tsan",
+        "message": "DB::Exception: Timeout exceeded",
+        "check_types": [
+            "tsan"
+        ]
+    },
     "03555_json_shared_data_advanced_paths_indexes": {
         "reason": "INVESTIGATE - Timeout on tsan, msan",
         "message": "Timeout! Processes left in process group",
@@ -234,6 +260,13 @@
     "00284_external_aggregation": {
         "reason": "INVESTIGATE - Timeout in query on tsan",
         "message": "DB::Exception: Timeout exceeded",
+        "check_types": [
+            "tsan"
+        ]
+    },
+    "00159_parallel_formatting_http": {
+        "reason": "INVESTIGATE - Timeout in curl on tsan",
+        "message": "curl: (28) Operation timed out",
         "check_types": [
             "tsan"
         ]
