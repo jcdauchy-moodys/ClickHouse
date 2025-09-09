@@ -195,6 +195,35 @@
             "tsan"
         ]
     },
+    "00172_hits_joins": {
+        "reason": "INVESTIGATE - Timeout on tsan",
+        "message": "Timeout! Processes left in process group",
+        "check_types": [
+            "tsan"
+        ]
+    },
+    "00084_external_aggregation": {
+        "reason": "INVESTIGATE - Timeout on tsan",
+        "message": "Timeout! Processes left in process group",
+        "check_types": [
+            "tsan"
+        ]
+    },
+    "00184_parallel_hash_returns_same_res_as_hash": {
+        "reason": "INVESTIGATE - Timeout on tsan",
+        "message": "Timeout! Processes left in process group",
+        "check_types": [
+            "tsan"
+        ]
+    },
+    "03555_json_shared_data_advanced_paths_indexes": {
+        "reason": "INVESTIGATE - Timeout on tsan, msan",
+        "message": "Timeout! Processes left in process group",
+        "check_types": [
+            "tsan",
+            "msan"
+        ]
+    },
     "02935_parallel_replicas_settings": {
         "reason": "INVESTIGATE - Timeout on tsan",
         "message": "Timeout exceeded (180 s) while flushing system log",
