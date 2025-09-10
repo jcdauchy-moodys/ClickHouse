@@ -221,6 +221,13 @@
             "tsan"
         ]
     },
+    "00429_long_http_bufferization": {
+        "reason": "INVESTIGATE - Timeout on tsan",
+        "message": "Timeout! Processes left in process group",
+        "check_types": [
+            "tsan"
+        ]
+    },
     "02177_issue_31009": {
         "reason": "INVESTIGATE - Timeout on ubsan",
         "message": "Timeout! Processes left in process group",
@@ -229,15 +236,23 @@
         ]
     },
     "00024_random_counters": {
-        "reason": "INVESTIGATE - Timeout on coverage",
+        "reason": "INVESTIGATE - Timeout on tsan, coverage",
         "message": "Timeout! Processes left in process group",
         "check_types": [
+            "tsan",
             "coverage"
         ]
     },
     "00159_parallel_formatting_json_and_friends_2": {
-        "reason": "INVESTIGATE - Timeout in query on tsan",
-        "message": "DB::Exception: Timeout exceeded",
+        "reason": "INVESTIGATE - Timeout on tsan",
+        "message": "Timeout",
+        "check_types": [
+            "tsan"
+        ]
+    },
+    "01782_field_oom": {
+        "reason": "INVESTIGATE - Timeout on tsan",
+        "message": "Timeout! Processes left in process group",
         "check_types": [
             "tsan"
         ]
@@ -303,5 +318,65 @@
     },
     "test_storage_s3_queue/test_0.py::test_streaming_to_many_views[ordered]": {
         "reason": "INVESTIGATE: Broken test?"
+    },
+    "test_storage_s3_queue/test_5.py::test_failed_startup": {
+        "reason": "INVESTIGATE: Unstable on tsan",
+        "check_types": [
+            "tsan"
+        ]
+    },
+    "test_storage_s3_queue/test_5.py::test_mv_settings[1-ordered]": {
+        "reason": "INVESTIGATE: Unstable on tsan",
+        "check_types": [
+            "tsan"
+        ]
+    },
+    "test_storage_s3_queue/test_5.py::test_persistent_processing_nodes_cleanup": {
+        "reason": "INVESTIGATE: Unstable on tsan",
+        "check_types": [
+            "tsan"
+        ]
+    },
+    "test_storage_s3_queue/test_5.py::test_detach_attach_table": {
+        "reason": "INVESTIGATE: Unstable on tsan",
+        "check_types": [
+            "tsan"
+        ]
+    },
+    "test_storage_s3_queue/test_5.py::test_persistent_processing": {
+        "reason": "INVESTIGATE: Unstable on tsan",
+        "check_types": [
+            "tsan"
+        ]
+    },
+    "test_storage_s3_queue/test_5.py::test_shutdown_order": {
+        "reason": "INVESTIGATE: Unstable on tsan",
+        "check_types": [
+            "tsan"
+        ]
+    },
+    "test_storage_s3_queue/test_5.py::test_mv_settings[1-unordered]": {
+        "reason": "INVESTIGATE: Unstable on tsan",
+        "check_types": [
+            "tsan"
+        ]
+    },
+    "test_storage_s3_queue/test_5.py::test_mv_settings[9999999999-unordered]": {
+        "reason": "INVESTIGATE: Unstable on tsan",
+        "check_types": [
+            "tsan"
+        ]
+    },
+    "test_storage_s3_queue/test_5.py::test_mv_settings[9999999999-ordered]": {
+        "reason": "INVESTIGATE: Unstable on tsan",
+        "check_types": [
+            "tsan"
+        ]
+    },
+    "test_storage_s3_queue/test_5.py::test_create_or_replace_table": {
+        "reason": "INVESTIGATE: Unstable on tsan",
+        "check_types": [
+            "tsan"
+        ]
     }
 }
