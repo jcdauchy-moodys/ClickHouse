@@ -1,7 +1,20 @@
 {
     "03455_direct_io_read_array_values": {
         "reason": "INVESTIGATE - Unstable on tsan",
-        "message": "DB::Exception: Estimated query execution time",
+        "check_types": [
+            "tsan"
+        ]
+    },
+    "00974_text_log_table_not_empty": {
+        "reason": "INVESTIGATE - Unstable on tsan",
+        "message": "curl: (28) Operation timed out",
+        "check_types": [
+            "tsan"
+        ]
+    },
+    "00626_replace_partition_from_table": {
+        "reason": "INVESTIGATE - Unstable on tsan",
+        "message": "DB::Exception: Cannot OPTIMIZE table: Current background tasks memory usage",
         "check_types": [
             "tsan"
         ]
@@ -229,6 +242,13 @@
         ]
     },
     "02177_issue_31009": {
+        "reason": "INVESTIGATE - Timeout on ubsan",
+        "message": "Timeout! Processes left in process group",
+        "check_types": [
+            "ubsan"
+        ]
+    },
+    "00159_parallel_formatting_csv_and_friends": {
         "reason": "INVESTIGATE - Timeout on ubsan",
         "message": "Timeout! Processes left in process group",
         "check_types": [
