@@ -25,10 +25,10 @@ from tests.integration.integration_test_images import IMAGES
 from ci.praktika.info import Info
 from ci.praktika.utils import Shell
 
-CLICKHOUSE_PLAY_HOST = os.environ.get("CLICKHOUSE_PLAY_HOST", "play.clickhouse.com")
-CLICKHOUSE_PLAY_USER = os.environ.get("CLICKHOUSE_PLAY_USER", "play")
-CLICKHOUSE_PLAY_PASSWORD = os.environ.get("CLICKHOUSE_PLAY_PASSWORD", "")
-CLICKHOUSE_PLAY_DB = os.environ.get("CLICKHOUSE_PLAY_DB", "default")
+CLICKHOUSE_PLAY_HOST = os.environ.get("CHECKS_DATABASE_HOST", "play.clickhouse.com")
+CLICKHOUSE_PLAY_USER = os.environ.get("CLICKHOUSE_TEST_STAT_LOGIN", "play")
+CLICKHOUSE_PLAY_PASSWORD = os.environ.get("CLICKHOUSE_TEST_STAT_PASSWORD", "")
+CLICKHOUSE_PLAY_DB = os.environ.get("CLICKHOUSE_PLAY_DB", "gh-data")
 CLICKHOUSE_PLAY_URL = f"https://{CLICKHOUSE_PLAY_HOST}/"
 
 MAX_RETRY = 2
@@ -891,11 +891,11 @@ class ClickhouseIntegrationTestsRunner:
                 SELECT
                     splitByString('::', test_name)[1] AS file,
                     median(test_duration_ms) AS test_duration_ms
-                FROM checks
+                FROM `{CLICKHOUSE_PLAY_DB}`.checks
                 WHERE (check_name LIKE 'Integration%')
                     AND (check_start_time >= ({start_time_filter} - toIntervalDay(30)))
                     AND (check_start_time <= ({start_time_filter} - toIntervalHour(2)))
-                    AND ((head_ref = 'master') AND startsWith(head_repo, 'ClickHouse/'))
+                    AND (head_ref LIKE 'antalya-25.8%' OR head_ref LIKE 'releases/25.8%' OR head_ref LIKE 'rebase-cicd-v25.8%')
                     AND (test_name != '')
                     AND (test_status != 'SKIPPED')
                 GROUP BY test_name
