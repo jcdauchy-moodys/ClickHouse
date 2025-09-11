@@ -121,6 +121,7 @@ OPTIONS_TO_TEST_RUNNER_ARGUMENTS = {
     "azure": " --azure-blob-storage --no-random-settings --no-random-merge-tree-settings",  # azurite is slow, with randomization it can be super slow
     "parallel": "--no-sequential",
     "sequential": "--no-parallel",
+    "amd_tsan": " --timeout 1200",  # NOTE (strtgbb): tsan is slow, increase the timeout to avoid timeout errors
 }
 
 
