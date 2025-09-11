@@ -10,7 +10,7 @@ workflow = Workflow.Config(
     event=Workflow.Event.PUSH,
     branches=[BASE_BRANCH, "releases/*", "antalya-*"],
     jobs=[
-        *JobConfigs.tidy_build_arm_jobs,
+        # *JobConfigs.tidy_build_arm_jobs,
         *JobConfigs.build_jobs,
         # *[ # NOTE (strtgbb): we don't run special build jobs
         #     job.set_dependency(
