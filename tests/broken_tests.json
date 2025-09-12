@@ -285,6 +285,13 @@
             "msan"
         ]
     },
+    "00429_long_http_bufferization": {
+        "reason": "INVESTIGATE - Timeout on msan",
+        "message": "Timeout! Processes left in process group",
+        "check_types": [
+            "msan"
+        ]
+    },
     "02935_parallel_replicas_settings": {
         "reason": "INVESTIGATE - Timeout on tsan",
         "message": "Timeout exceeded (180 s) while flushing system log",

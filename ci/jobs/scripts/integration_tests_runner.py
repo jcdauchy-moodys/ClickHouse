@@ -29,7 +29,8 @@ CLICKHOUSE_PLAY_HOST = os.environ.get("CHECKS_DATABASE_HOST", "play.clickhouse.c
 CLICKHOUSE_PLAY_USER = os.environ.get("CLICKHOUSE_TEST_STAT_LOGIN", "play")
 CLICKHOUSE_PLAY_PASSWORD = os.environ.get("CLICKHOUSE_TEST_STAT_PASSWORD", "")
 CLICKHOUSE_PLAY_DB = os.environ.get("CLICKHOUSE_PLAY_DB", "gh-data")
-CLICKHOUSE_PLAY_URL = f"https://{CLICKHOUSE_PLAY_HOST}/"
+CLICKHOUSE_PLAY_URL = f"https://{CLICKHOUSE_PLAY_HOST}:8443/"
+
 
 MAX_RETRY = 2
 NUM_WORKERS = 4
@@ -914,6 +915,11 @@ class ClickhouseIntegrationTestsRunner:
         max_retries = 3
         retry_delay_seconds = 5
 
+        headers = {
+            "X-ClickHouse-User": CLICKHOUSE_PLAY_USER,
+            "X-ClickHouse-Key": CLICKHOUSE_PLAY_PASSWORD,
+        }
+
         for attempt in range(max_retries):
             try:
                 logging.info(
@@ -922,7 +928,12 @@ class ClickhouseIntegrationTestsRunner:
                     max_retries,
                 )
 
-                response = requests.get(url, timeout=120)
+                response = requests.post(
+                    CLICKHOUSE_PLAY_URL,
+                    timeout=120,
+                    headers=headers,
+                    params={"query": query},
+                )
                 response.raise_for_status()
                 result_data = response.json().get("data", [])
                 tests_execution_times = {
