@@ -191,6 +191,8 @@ def main():
             targets = "fuzzers"
         elif build_type in (BuildTypes.AMD_TIDY, BuildTypes.ARM_TIDY):
             targets = "-k0 all"
+        elif build_type in (BuildTypes.AMD_RELEASE, BuildTypes.ARM_RELEASE):
+            targets = "clickhouse-bundle clickhouse-stripped"
         else:
             targets = "clickhouse-bundle"
         results.append(
