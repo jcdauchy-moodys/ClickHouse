@@ -368,12 +368,14 @@ class ToolSet:
 class ArtifactNames:
     CH_AMD_DEBUG = "CH_AMD_DEBUG"
     CH_AMD_RELEASE = "CH_AMD_RELEASE"
+    CH_AMD_RELEASE_STRIPPED = "CH_AMD_RELEASE_STRIPPED"
     CH_AMD_ASAN = "CH_AMD_ASAN"
     CH_AMD_TSAN = "CH_AMD_TSAN"
     CH_AMD_MSAN = "CH_AMD_MSAN"
     CH_AMD_UBSAN = "CH_AMD_UBSAN"
     CH_AMD_BINARY = "CH_AMD_BINARY"
     CH_ARM_RELEASE = "CH_ARM_RELEASE"
+    CH_ARM_RELEASE_STRIPPED = "CH_ARM_RELEASE_STRIPPED"
     CH_ARM_ASAN = "CH_ARM_ASAN"
 
     CH_COV_BIN = "CH_COV_BIN"
@@ -445,6 +447,16 @@ class ArtifactConfigs:
             ArtifactNames.CH_RISCV64,
             ArtifactNames.CH_S390X,
             ArtifactNames.CH_LOONGARCH64,
+        ]
+    )
+    clickhouse_stripped_binaries = Artifact.Config(
+        name="...",
+        type=Artifact.Type.S3,
+        path=f"{TEMP_DIR}/build/programs/self-extracting/clickhouse-stripped",
+    ).parametrize(
+        names=[
+            ArtifactNames.CH_AMD_RELEASE_STRIPPED,
+            ArtifactNames.CH_ARM_RELEASE_STRIPPED,
         ]
     )
     clickhouse_debians = Artifact.Config(
