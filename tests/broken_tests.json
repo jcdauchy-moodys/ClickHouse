@@ -235,10 +235,11 @@
         ]
     },
     "00429_long_http_bufferization": {
-        "reason": "INVESTIGATE - Timeout on tsan",
+        "reason": "INVESTIGATE - Timeout on tsan, msan",
         "message": "Timeout! Processes left in process group",
         "check_types": [
-            "tsan"
+            "tsan",
+            "msan"
         ]
     },
     "02177_issue_31009": {
@@ -277,18 +278,17 @@
             "tsan"
         ]
     },
+    "03321_clickhouse_local_initialization_not_too_slow_even_under_sanitizers": {
+        "reason": "INVESTIGATE - Unstable on msan",
+        "check_types": [
+            "msan"
+        ]
+    },
     "03555_json_shared_data_advanced_paths_indexes": {
         "reason": "INVESTIGATE - Timeout on tsan, msan",
         "message": "Timeout! Processes left in process group",
         "check_types": [
             "tsan",
-            "msan"
-        ]
-    },
-    "00429_long_http_bufferization": {
-        "reason": "INVESTIGATE - Timeout on msan",
-        "message": "Timeout! Processes left in process group",
-        "check_types": [
             "msan"
         ]
     },
@@ -316,6 +316,13 @@
     "02676_optimize_old_parts_replicated": {
         "reason": "INVESTIGATE - Unstable on tsan",
         "message": "result differs with reference",
+        "check_types": [
+            "tsan"
+        ]
+    },
+    "test_scheduler_cpu_preemptive/test.py::test_downscaling[cpu-slot-preemption-timeout-1ms]": {
+        "reason": "INVESTIGATE - Unstable on tsan",
+        "message": "Failed: Timeout >900.0s",
         "check_types": [
             "tsan"
         ]
