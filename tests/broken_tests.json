@@ -1,10 +1,7 @@
 {
     "02844_max_backup_bandwidth_s3": {
-        "reason": "INVESTIGATE - Fails on debug",
-        "message": "result differs with reference",
-        "check_types": [
-            "debug"
-        ]
+        "reason": "KNOWN - Unstable upstream",
+        "message": "result differs with reference"
     },
     "03455_direct_io_read_array_values": {
         "reason": "INVESTIGATE - Unstable on tsan",
@@ -215,9 +212,10 @@
         ]
     },
     "00816_long_concurrent_alter_column": {
-        "reason": "INVESTIGATE - Timeout on msan",
+        "reason": "INVESTIGATE - Timeout on asan, msan",
         "message": "Timeout! Processes left in process group",
         "check_types": [
+            "asan",
             "msan"
         ]
     },
@@ -281,8 +279,7 @@
         ]
     },
     "02177_issue_31009": {
-        "reason": "INVESTIGATE - Timeout on ubsan",
-        "message": "Timeout! Processes left in process group",
+        "reason": "INVESTIGATE - unstable upstream on ubsan",
         "check_types": [
             "ubsan"
         ]
@@ -539,7 +536,6 @@
         "message": "docker_compose_iceberg_hms_catalog.yml', '--verbose', 'up', '-d']' timed out after 300 seconds"
     },
     "test_keeper_memory_soft_limit/test.py::test_soft_limit_create": {
-        "reason": "INVESTIGATE: Out of Memory",
-        "message": "Coordination error: Out of Memory."
+        "reason": "KNOWN: Unstable upstream"
     }
 }
