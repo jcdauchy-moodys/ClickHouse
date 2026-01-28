@@ -277,7 +277,7 @@ class Runner:
             # Check if running inside a Docker container (Docker-in-Docker scenario)
             # If so, translate paths from container to host
             if os.path.exists('/.dockerenv') or os.path.exists('/run/.containerenv'):
-                print(f"Detected running inside Docker container")
+                print(f"Detected running inside Docker container (Docker-in-Docker)")
                 # Common pattern: /var/jenkins_home is a volume mounted from host
                 # Check if we can find the real host path
                 if '/var/jenkins_home' in host_mount_path:
@@ -285,13 +285,16 @@ class Runner:
                     print(f"Translating path for Docker-in-Docker:")
                     print(f"  Container path: {host_mount_path}")
                     print(f"  Potential host path: {potential_host_path}")
-                    # Verify this path works with Docker
-                    test_result = Shell.check(f"docker run --rm -v {potential_host_path}:/test:ro alpine ls /test | head -5", verbose=True, strict=False)
-                    if test_result:
-                        print(f"SUCCESS: Host path translation works!")
+                    # Verify this path works with Docker by testing if we can see files
+                    print(f"Testing if Docker daemon can access translated path...")
+                    test_output = Shell.get_output(f"docker run --rm -v {potential_host_path}:/test:ro alpine ls -la /test 2>&1 | head -10", verbose=True, strict=False)
+                    if test_output and "cannot access" not in test_output and "total 0" not in test_output and len(test_output.strip().split('\n')) > 2:
+                        print(f"SUCCESS: Host path translation works! Files are visible.")
                         host_mount_path = potential_host_path
                     else:
-                        print(f"WARNING: Translated path doesn't work, will try original path")
+                        print(f"WARNING: Translated path doesn't show files:")
+                        print(f"{test_output}")
+                        print(f"Will continue with original path and rely on volume workaround if needed")
             print(f"Docker mount: {host_mount_path} -> {current_dir}")
             print(f"Current working directory: {current_dir}")
             print(f"Host mount path (absolute): {host_mount_path}")
@@ -316,15 +319,13 @@ class Runner:
             print(f"Checking if Docker can access the directory:")
             # Try to exec into a running container to see what Docker daemon can see
             print(f"Testing Docker daemon's view of the filesystem:")
-            docker_view_result = Shell.get_output_or_error(f"docker run --rm -v /:/host alpine ls -la /host{host_mount_path} | head -5", verbose=True)
-            if "total 0" in docker_view_result or not docker_view_result.strip():
+            docker_view_result = Shell.get_output(f"docker run --rm -v /:/host alpine ls -la /host{host_mount_path} 2>&1 | head -5", verbose=True, strict=False)
+            if "total 0" in docker_view_result or "cannot access" in docker_view_result or not docker_view_result.strip():
                 print(f"WARNING: Docker daemon cannot see files in {host_mount_path}")
-                print(f"This suggests Jenkins is running in Docker and the daemon can't access nested mounts")
-                print(f"Attempting workaround: Use docker cp to copy files into a volume...")
-                # Check if there's a different path Docker can access
-                print(f"Checking alternatives:")
+                print(f"This suggests Docker-in-Docker with inaccessible mount path")
+                print(f"Checking if files are visible at all to Docker daemon...")
                 Shell.check("docker run --rm -v /:/host alpine ls -la /host/tmp | head -5", verbose=True, strict=False)
-                Shell.check("docker run --rm -v /:/host alpine ls -la /host/var/lib | head -5", verbose=True, strict=False)
+                Shell.check("docker run --rm -v /:/host alpine ls -la /host/var/lib/docker/volumes | head -5", verbose=True, strict=False)
             for setting in settings:
                 if setting.startswith("--volume"):
                     volume = setting.removeprefix("--volume=").split(":")[0]
