@@ -271,9 +271,22 @@ class Runner:
             docker = docker or f"{docker_name}:{docker_tag}"
             current_dir = os.getcwd()
             # Use absolute path for volume mount to ensure Docker can access it
-            host_mount_path = os.path.abspath('.')
+            # Resolve symlinks using os.path.realpath to get the actual filesystem path
+            host_mount_path = os.path.realpath('.')
             print(f"Docker mount: {host_mount_path} -> {current_dir}")
+            print(f"Current working directory: {current_dir}")
+            print(f"Host mount path (absolute): {host_mount_path}")
             print(f"Checking if ci/jobs/build_clickhouse.py exists: {Path('ci/jobs/build_clickhouse.py').exists()}")
+            print(f"Full path to file: {os.path.abspath('ci/jobs/build_clickhouse.py')}")
+            print(f"Listing files in current directory:")
+            Shell.check("ls -la | head -20", verbose=True, strict=False)
+            print(f"Listing files in ci directory:")
+            Shell.check("ls -la ./ci | head -20", verbose=True, strict=False)
+            print(f"Environment WORKSPACE: {os.environ.get('WORKSPACE', 'not set')}")
+            print(f"Environment PWD: {os.environ.get('PWD', 'not set')}")
+            print(f"Checking if paths are symlinks:")
+            Shell.check(f"ls -ld {host_mount_path}", verbose=True, strict=False)
+            Shell.check(f"readlink -f {host_mount_path}", verbose=True, strict=False)
             for setting in settings:
                 if setting.startswith("--volume"):
                     volume = setting.removeprefix("--volume=").split(":")[0]
@@ -301,6 +314,16 @@ class Runner:
                 else:
                     print(f"WARNING: File still not visible. Listing root directory:")
                     Shell.check(f"docker run --rm --volume {host_mount_path}:{current_dir} --workdir={current_dir} {docker} ls -la", verbose=True, strict=False)
+                    print(f"ERROR: Volume mount appears to be empty. Host path: {host_mount_path}, Container path: {current_dir}")
+                    print(f"This suggests Docker cannot access the files in {host_mount_path}")
+                    print(f"Possible causes:")
+                    print(f"  1. Docker daemon doesn't have permission to access {host_mount_path}")
+                    print(f"  2. The path is inside another mount that Docker can't traverse")
+                    print(f"  3. SELinux or AppArmor is blocking access")
+                    print(f"Attempting to mount parent directory to check...")
+                    parent_host = str(Path(host_mount_path).parent)
+                    parent_container = str(Path(current_dir).parent)
+                    Shell.check(f"docker run --rm --volume {parent_host}:{parent_container} --workdir={parent_container} {docker} ls -la {Path(current_dir).name}", verbose=True, strict=False)
             
             cmd = f"docker run --rm --name praktika {'--user $(id -u):$(id -g)' if not from_root else ''} -e PYTHONPATH='.:./ci' --volume {host_mount_path}:{current_dir} --workdir={current_dir} {' '.join(settings)} {docker} {job.command}"
         else:
