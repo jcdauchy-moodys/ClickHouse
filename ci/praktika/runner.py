@@ -287,6 +287,11 @@ class Runner:
             print(f"Checking if paths are symlinks:")
             Shell.check(f"ls -ld {host_mount_path}", verbose=True, strict=False)
             Shell.check(f"readlink -f {host_mount_path}", verbose=True, strict=False)
+            print(f"Checking mount points:")
+            Shell.check(f"df -h {host_mount_path}", verbose=True, strict=False)
+            Shell.check(f"mount | grep jenkins", verbose=True, strict=False)
+            print(f"Checking SELinux status:")
+            Shell.check("getenforce", verbose=True, strict=False)
             for setting in settings:
                 if setting.startswith("--volume"):
                     volume = setting.removeprefix("--volume=").split(":")[0]
@@ -302,30 +307,33 @@ class Runner:
             
             # Debug: Check if files are visible inside container
             print(f"DEBUG: Testing if file is visible in container (with user flag)")
-            test_cmd = f"docker run --rm {'--user $(id -u):$(id -g)' if not from_root else ''} --volume {host_mount_path}:{current_dir} --workdir={current_dir} {' '.join(settings)} {docker} ls -la ./ci/jobs/build_clickhouse.py"
+            # Try with :z flag for SELinux (shared content label)
+            test_cmd = f"docker run --rm {'--user $(id -u):$(id -g)' if not from_root else ''} --volume {host_mount_path}:{current_dir}:z --workdir={current_dir} {' '.join(settings)} {docker} ls -la ./ci/jobs/build_clickhouse.py"
             test_result = Shell.check(test_cmd, verbose=True, strict=False)
-            if not test_result:
-                print(f"WARNING: File not visible with user flag. Testing without user flag:")
-                test_cmd_no_user = f"docker run --rm --volume {host_mount_path}:{current_dir} --workdir={current_dir} {docker} ls -la ./ci/jobs/build_clickhouse.py"
+            if test_result:
+                print(f"SUCCESS: Files are visible in container with SELinux :z flag")
+            else:
+                print(f"WARNING: File not visible with :z flag and user flag. Testing without user flag:")
+                test_cmd_no_user = f"docker run --rm --volume {host_mount_path}:{current_dir}:z --workdir={current_dir} {docker} ls -la ./ci/jobs/build_clickhouse.py"
                 test_result_no_user = Shell.check(test_cmd_no_user, verbose=True, strict=False)
                 if test_result_no_user:
                     print(f"SUCCESS: File visible without user flag. Removing user flag from main command.")
                     from_root = True  # This will skip the --user flag
                 else:
-                    print(f"WARNING: File still not visible. Listing root directory:")
-                    Shell.check(f"docker run --rm --volume {host_mount_path}:{current_dir} --workdir={current_dir} {docker} ls -la", verbose=True, strict=False)
-                    print(f"ERROR: Volume mount appears to be empty. Host path: {host_mount_path}, Container path: {current_dir}")
-                    print(f"This suggests Docker cannot access the files in {host_mount_path}")
-                    print(f"Possible causes:")
-                    print(f"  1. Docker daemon doesn't have permission to access {host_mount_path}")
-                    print(f"  2. The path is inside another mount that Docker can't traverse")
-                    print(f"  3. SELinux or AppArmor is blocking access")
-                    print(f"Attempting to mount parent directory to check...")
-                    parent_host = str(Path(host_mount_path).parent)
-                    parent_container = str(Path(current_dir).parent)
-                    Shell.check(f"docker run --rm --volume {parent_host}:{parent_container} --workdir={parent_container} {docker} ls -la {Path(current_dir).name}", verbose=True, strict=False)
+                    print(f"WARNING: File still not visible with :z flag. Trying :Z flag (private label):")
+                    test_cmd_Z = f"docker run --rm --volume {host_mount_path}:{current_dir}:Z --workdir={current_dir} {docker} ls -la ./ci/jobs/build_clickhouse.py"
+                    test_result_Z = Shell.check(test_cmd_Z, verbose=True, strict=False)
+                    if not test_result_Z:
+                        print(f"ERROR: Volume mount appears to be empty even with SELinux flags.")
+                        print(f"Host path: {host_mount_path}, Container path: {current_dir}")
+                        print(f"This suggests a more complex mount or permission issue.")
+                        print(f"Attempting to mount parent directory to check...")
+                        parent_host = str(Path(host_mount_path).parent)
+                        parent_container = str(Path(current_dir).parent)
+                        Shell.check(f"docker run --rm --volume {parent_host}:{parent_container}:z --workdir={parent_container} {docker} ls -la {Path(current_dir).name}", verbose=True, strict=False)
             
-            cmd = f"docker run --rm --name praktika {'--user $(id -u):$(id -g)' if not from_root else ''} -e PYTHONPATH='.:./ci' --volume {host_mount_path}:{current_dir} --workdir={current_dir} {' '.join(settings)} {docker} {job.command}"
+            # Use :z flag in the actual command for SELinux compatibility
+            cmd = f"docker run --rm --name praktika {'--user $(id -u):$(id -g)' if not from_root else ''} -e PYTHONPATH='.:./ci' --volume {host_mount_path}:{current_dir}:z --workdir={current_dir} {' '.join(settings)} {docker} {job.command}"
         else:
             cmd = job.command
             python_path = os.getenv("PYTHONPATH", ":")
