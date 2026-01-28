@@ -292,6 +292,12 @@ class Runner:
             Shell.check(f"mount | grep jenkins", verbose=True, strict=False)
             print(f"Checking SELinux status:")
             Shell.check("getenforce", verbose=True, strict=False)
+            print(f"Checking Docker info:")
+            Shell.check("docker info | grep -E '(Storage Driver|Docker Root Dir)'", verbose=True, strict=False)
+            print(f"Checking if Docker can access the directory:")
+            # Try to exec into a running container to see what Docker daemon can see
+            print(f"Testing Docker daemon's view of the filesystem:")
+            Shell.check(f"docker run --rm -v /:/host alpine ls -la /host{host_mount_path} | head -20", verbose=True, strict=False)
             for setting in settings:
                 if setting.startswith("--volume"):
                     volume = setting.removeprefix("--volume=").split(":")[0]
@@ -326,11 +332,21 @@ class Runner:
                     if not test_result_Z:
                         print(f"ERROR: Volume mount appears to be empty even with SELinux flags.")
                         print(f"Host path: {host_mount_path}, Container path: {current_dir}")
-                        print(f"This suggests a more complex mount or permission issue.")
-                        print(f"Attempting to mount parent directory to check...")
+                        print(f"This suggests Docker cannot mount subdirectories of {Path(host_mount_path).parent}")
+                        print(f"Attempting workaround: mount parent directory and work in subdirectory...")
                         parent_host = str(Path(host_mount_path).parent)
                         parent_container = str(Path(current_dir).parent)
-                        Shell.check(f"docker run --rm --volume {parent_host}:{parent_container}:z --workdir={parent_container} {docker} ls -la {Path(current_dir).name}", verbose=True, strict=False)
+                        print(f"Testing parent mount: {parent_host} -> {parent_container}")
+                        test_parent = Shell.check(f"docker run --rm --volume {parent_host}:{parent_container}:z --workdir={parent_container}/{Path(current_dir).name} {docker} ls -la ./ci/jobs/build_clickhouse.py", verbose=True, strict=False)
+                        if test_parent:
+                            print(f"SUCCESS: Parent directory mount works! Using parent mount as workaround.")
+                            # Override the mount path to use parent directory
+                            host_mount_path = parent_host
+                            current_dir = f"{parent_container}/{Path(current_dir).name}"
+                            print(f"Updated mount: {host_mount_path} -> container workdir: {current_dir}")
+                        else:
+                            print(f"ERROR: Even parent directory mount doesn't work. This is a Docker configuration issue.")
+                            Shell.check(f"docker run --rm --volume {parent_host}:{parent_container}:z --workdir={parent_container} {docker} ls -la", verbose=True, strict=False)
             
             # Use :z flag in the actual command for SELinux compatibility
             cmd = f"docker run --rm --name praktika {'--user $(id -u):$(id -g)' if not from_root else ''} -e PYTHONPATH='.:./ci' --volume {host_mount_path}:{current_dir}:z --workdir={current_dir} {' '.join(settings)} {docker} {job.command}"
