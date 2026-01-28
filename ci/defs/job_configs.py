@@ -46,7 +46,7 @@ common_ft_job_config = Job.Config(
 )
 
 BINARY_DOCKER_COMMAND = (
-    "altinityinfra/binary-builder+--network=host+"
+    "951195317234.dkr.ecr.eu-west-1.amazonaws.com/moodys-observability/clickhouse-binary-builder+--network=host+"
     f"--memory={Utils.physical_memory() * 95 // 100}+"
     f"--memory-reservation={Utils.physical_memory() * 9 // 10}"
     '+--env=AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID"+--env=AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY"'
