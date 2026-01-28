@@ -242,5 +242,36 @@ TEST(S3UriTest, versionIdChecks)
     }
 }
 
+TEST(S3UriTest, urlEncodedKeys)
+{
+    /// Test case for Iceberg partition paths with encoded slashes
+    /// See: https://github.com/Altinity/ClickHouse/issues/1348
+    {
+        S3::URI uri("https://bucketname.s3.us-east-2.amazonaws.com/data/partition_key=dev%2Fapp1%2Fservice1/file.parquet");
+        ASSERT_EQ("https://s3.us-east-2.amazonaws.com", uri.endpoint);
+        ASSERT_EQ("bucketname", uri.bucket);
+        /// Key should preserve URL encoding - %2F should NOT be decoded to /
+        ASSERT_EQ("data/partition_key=dev%2Fapp1%2Fservice1/file.parquet", uri.key);
+        ASSERT_EQ(true, uri.is_virtual_hosted_style);
+    }
+    {
+        /// Path-style URI with encoded slashes
+        S3::URI uri("https://s3.us-east-2.amazonaws.com/bucketname/data/partition_key=prod%2Fapp2%2Fservice2/file.parquet");
+        ASSERT_EQ("https://s3.us-east-2.amazonaws.com", uri.endpoint);
+        ASSERT_EQ("bucketname", uri.bucket);
+        ASSERT_EQ("data/partition_key=prod%2Fapp2%2Fservice2/file.parquet", uri.key);
+        ASSERT_EQ(false, uri.is_virtual_hosted_style);
+    }
+    {
+        /// Test with other encoded characters
+        S3::URI uri("https://bucketname.s3.us-east-2.amazonaws.com/path%20with%20spaces/file%2Bname.txt");
+        ASSERT_EQ("https://s3.us-east-2.amazonaws.com", uri.endpoint);
+        ASSERT_EQ("bucketname", uri.bucket);
+        /// Should preserve all URL encoding
+        ASSERT_EQ("path%20with%20spaces/file%2Bname.txt", uri.key);
+        ASSERT_EQ(true, uri.is_virtual_hosted_style);
+    }
+}
+
 }
 #endif

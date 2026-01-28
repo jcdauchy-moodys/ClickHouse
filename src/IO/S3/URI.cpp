@@ -99,17 +99,42 @@ URI::URI(const std::string & uri_, bool allow_archive_path_syntax)
     /// '?' can not be used as a wildcard, otherwise it will be ambiguous.
     /// If no "versionId" in the http parameter, '?' can be used as a wildcard.
     /// It is necessary to encode '?' to avoid deletion during parsing path.
+    String uri_for_path_extraction = uri_str;
     if (!has_version_id && uri_.contains('?'))
     {
         String uri_with_question_mark_encode;
         Poco::URI::encode(uri_, "?", uri_with_question_mark_encode);
         uri = Poco::URI(uri_with_question_mark_encode);
+        uri_for_path_extraction = uri_with_question_mark_encode;
     }
 
     String name;
     String endpoint_authority_from_uri;
 
     bool is_using_aws_private_link_interface = re2::RE2::FullMatch(uri.getAuthority(), aws_private_link_style_pattern);
+
+    /// Extract the original path from the URI string to preserve URL encoding (e.g., %2F should not be decoded to /)
+    /// Poco::URI automatically decodes percent-encoded characters, but for S3 keys we need to preserve them.
+    auto extractOriginalPath = [&uri_for_path_extraction, &uri]() -> std::string
+    {
+        /// Find the path portion after the authority (host:port)
+        /// Format: scheme://authority/path?query
+        size_t scheme_pos = uri_for_path_extraction.find("://");
+        if (scheme_pos == std::string::npos)
+            return "";
+        
+        size_t authority_start = scheme_pos + 3;
+        size_t path_start = uri_for_path_extraction.find('/', authority_start);
+        if (path_start == std::string::npos)
+            return "";
+        
+        /// Find the end of the path (before query or fragment)
+        size_t path_end = uri_for_path_extraction.find_first_of("?#", path_start);
+        if (path_end == std::string::npos)
+            path_end = uri_for_path_extraction.length();
+        
+        return uri_for_path_extraction.substr(path_start, path_end - path_start);
+    };
 
     if (!is_using_aws_private_link_interface
         && re2::RE2::FullMatch(uri.getAuthority(), virtual_hosted_style_pattern, &bucket, &name, &endpoint_authority_from_uri))
@@ -125,10 +150,12 @@ URI::URI(const std::string & uri_, bool allow_archive_path_syntax)
             endpoint = uri.getScheme() + "://" + name + endpoint_authority_from_uri;
         }
 
-        if (!uri.getPath().empty())
+        /// Use original path to preserve URL encoding
+        std::string original_path = extractOriginalPath();
+        if (!original_path.empty() && original_path != "/")
         {
             /// Remove leading '/' from path to extract key.
-            key = uri.getPath().substr(1);
+            key = original_path.substr(1);
         }
 
         boost::to_upper(name);
@@ -137,21 +164,27 @@ URI::URI(const std::string & uri_, bool allow_archive_path_syntax)
         else
             storage_name = name;
     }
-    else if (re2::RE2::PartialMatch(uri.getPath(), path_style_pattern, &bucket, &key))
-    {
-        is_virtual_hosted_style = false;
-        endpoint = uri.getScheme() + "://" + uri.getAuthority();
-    }
     else
     {
-        /// Custom endpoint, e.g. a public domain of Cloudflare R2,
-        /// which could be served by a custom server-side code.
-        storage_name = "S3";
-        bucket = "default";
-        is_virtual_hosted_style = false;
-        endpoint = uri.getScheme() + "://" + uri.getAuthority();
-        if (!uri.getPath().empty())
-            key = uri.getPath().substr(1);
+        /// For path-style and custom endpoints, extract bucket and key from original path
+        std::string original_path = extractOriginalPath();
+        
+        if (re2::RE2::PartialMatch(original_path, path_style_pattern, &bucket, &key))
+        {
+            is_virtual_hosted_style = false;
+            endpoint = uri.getScheme() + "://" + uri.getAuthority();
+        }
+        else
+        {
+            /// Custom endpoint, e.g. a public domain of Cloudflare R2,
+            /// which could be served by a custom server-side code.
+            storage_name = "S3";
+            bucket = "default";
+            is_virtual_hosted_style = false;
+            endpoint = uri.getScheme() + "://" + uri.getAuthority();
+            if (!original_path.empty() && original_path != "/")
+                key = original_path.substr(1);
+        }
     }
 
     validateBucket(bucket, uri);
