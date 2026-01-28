@@ -151,10 +151,10 @@ def main():
     # NOTE(vnemkov): always getting pre-calcutated version from custom_data
     version_dict = info.get_kv_data("version")
 
-    # if info.pr_number == 0 and info.is_push_event:
-    #     version_dict = info.get_kv_data("version")
-    # else:
-    #     version_dict = CHVersion.get_current_version_as_dict()
+    # Fallback: if version not in custom_data, get it directly from the repo
+    if not version_dict:
+        print("WARNING: Version not found in custom_data, getting from repository directly")
+        version_dict = CHVersion.get_current_version_as_dict()
 
     if res and JobStages.CMAKE in stages:
         assert version_dict, "Failed to determine build version"
