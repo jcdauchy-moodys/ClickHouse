@@ -277,55 +277,14 @@ class Runner:
             # Check if running inside a Docker container (Docker-in-Docker scenario)
             # If so, translate paths from container to host
             if os.path.exists('/.dockerenv') or os.path.exists('/run/.containerenv'):
-                print(f"Detected running inside Docker container (Docker-in-Docker)")
-                # Common pattern: /var/jenkins_home is a volume mounted from host
-                # Check if we can find the real host path
+                # Common pattern: /var/jenkins_home is a volume mounted from host at /var/lib/docker/volumes/jenkins/_data
                 if '/var/jenkins_home' in host_mount_path:
                     potential_host_path = host_mount_path.replace('/var/jenkins_home', '/var/lib/docker/volumes/jenkins/_data')
-                    print(f"Translating path for Docker-in-Docker:")
-                    print(f"  Container path: {host_mount_path}")
-                    print(f"  Potential host path: {potential_host_path}")
                     # Verify this path works with Docker by testing if we can see files
-                    print(f"Testing if Docker daemon can access translated path...")
-                    test_output = Shell.get_output(f"docker run --rm -v {potential_host_path}:/test:ro alpine ls -la /test 2>&1 | head -10", verbose=True, strict=False)
+                    test_output = Shell.get_output(f"docker run --rm -v {potential_host_path}:/test:ro alpine ls /test 2>&1 | head -5", verbose=False, strict=False)
                     if test_output and "cannot access" not in test_output and "total 0" not in test_output and len(test_output.strip().split('\n')) > 2:
-                        print(f"SUCCESS: Host path translation works! Files are visible.")
+                        print(f"Docker-in-Docker detected: using host path {potential_host_path}")
                         host_mount_path = potential_host_path
-                    else:
-                        print(f"WARNING: Translated path doesn't show files:")
-                        print(f"{test_output}")
-                        print(f"Will continue with original path and rely on volume workaround if needed")
-            print(f"Docker mount: {host_mount_path} -> {current_dir}")
-            print(f"Current working directory: {current_dir}")
-            print(f"Host mount path (absolute): {host_mount_path}")
-            print(f"Checking if ci/jobs/build_clickhouse.py exists: {Path('ci/jobs/build_clickhouse.py').exists()}")
-            print(f"Full path to file: {os.path.abspath('ci/jobs/build_clickhouse.py')}")
-            print(f"Listing files in current directory:")
-            Shell.check("ls -la | head -20", verbose=True, strict=False)
-            print(f"Listing files in ci directory:")
-            Shell.check("ls -la ./ci | head -20", verbose=True, strict=False)
-            print(f"Environment WORKSPACE: {os.environ.get('WORKSPACE', 'not set')}")
-            print(f"Environment PWD: {os.environ.get('PWD', 'not set')}")
-            print(f"Checking if paths are symlinks:")
-            Shell.check(f"ls -ld {host_mount_path}", verbose=True, strict=False)
-            Shell.check(f"readlink -f {host_mount_path}", verbose=True, strict=False)
-            print(f"Checking mount points:")
-            Shell.check(f"df -h {host_mount_path}", verbose=True, strict=False)
-            Shell.check(f"mount | grep jenkins", verbose=True, strict=False)
-            print(f"Checking SELinux status:")
-            Shell.check("getenforce", verbose=True, strict=False)
-            print(f"Checking Docker info:")
-            Shell.check("docker info | grep -E '(Storage Driver|Docker Root Dir)'", verbose=True, strict=False)
-            print(f"Checking if Docker can access the directory:")
-            # Try to exec into a running container to see what Docker daemon can see
-            print(f"Testing Docker daemon's view of the filesystem:")
-            docker_view_result = Shell.get_output(f"docker run --rm -v /:/host alpine ls -la /host{host_mount_path} 2>&1 | head -5", verbose=True, strict=False)
-            if "total 0" in docker_view_result or "cannot access" in docker_view_result or not docker_view_result.strip():
-                print(f"WARNING: Docker daemon cannot see files in {host_mount_path}")
-                print(f"This suggests Docker-in-Docker with inaccessible mount path")
-                print(f"Checking if files are visible at all to Docker daemon...")
-                Shell.check("docker run --rm -v /:/host alpine ls -la /host/tmp | head -5", verbose=True, strict=False)
-                Shell.check("docker run --rm -v /:/host alpine ls -la /host/var/lib/docker/volumes | head -5", verbose=True, strict=False)
             for setting in settings:
                 if setting.startswith("--volume"):
                     volume = setting.removeprefix("--volume=").split(":")[0]
@@ -338,68 +297,6 @@ class Runner:
                 "docker ps -a --format '{{.Names}}' | grep -q praktika && docker rm -f praktika",
                 verbose=True,
             )
-            
-            # Debug: Check if files are visible inside container
-            print(f"DEBUG: Testing if file is visible in container (with user flag)")
-            # Try with :z flag for SELinux (shared content label)
-            test_cmd = f"docker run --rm {'--user $(id -u):$(id -g)' if not from_root else ''} --volume {host_mount_path}:{current_dir}:z --workdir={current_dir} {' '.join(settings)} {docker} ls -la ./ci/jobs/build_clickhouse.py"
-            test_result = Shell.check(test_cmd, verbose=True, strict=False)
-            if test_result:
-                print(f"SUCCESS: Files are visible in container with SELinux :z flag")
-            else:
-                print(f"WARNING: File not visible with :z flag and user flag. Testing without user flag:")
-                test_cmd_no_user = f"docker run --rm --volume {host_mount_path}:{current_dir}:z --workdir={current_dir} {docker} ls -la ./ci/jobs/build_clickhouse.py"
-                test_result_no_user = Shell.check(test_cmd_no_user, verbose=True, strict=False)
-                if test_result_no_user:
-                    print(f"SUCCESS: File visible without user flag. Removing user flag from main command.")
-                    from_root = True  # This will skip the --user flag
-                else:
-                    print(f"WARNING: File still not visible with :z flag. Trying :Z flag (private label):")
-                    test_cmd_Z = f"docker run --rm --volume {host_mount_path}:{current_dir}:Z --workdir={current_dir} {docker} ls -la ./ci/jobs/build_clickhouse.py"
-                    test_result_Z = Shell.check(test_cmd_Z, verbose=True, strict=False)
-                    if not test_result_Z:
-                        print(f"ERROR: Volume mount appears to be empty even with SELinux flags.")
-                        print(f"Host path: {host_mount_path}, Container path: {current_dir}")
-                        print(f"This suggests Docker cannot mount subdirectories of {Path(host_mount_path).parent}")
-                        print(f"Attempting workaround: mount parent directory and work in subdirectory...")
-                        parent_host = str(Path(host_mount_path).parent)
-                        parent_container = str(Path(current_dir).parent)
-                        print(f"Testing parent mount: {parent_host} -> {parent_container}")
-                        test_parent = Shell.check(f"docker run --rm --volume {parent_host}:{parent_container}:z --workdir={parent_container}/{Path(current_dir).name} {docker} ls -la ./ci/jobs/build_clickhouse.py", verbose=True, strict=False)
-                        if test_parent:
-                            print(f"SUCCESS: Parent directory mount works! Using parent mount as workaround.")
-                            # Override the mount path to use parent directory
-                            host_mount_path = parent_host
-                            current_dir = f"{parent_container}/{Path(current_dir).name}"
-                            print(f"Updated mount: {host_mount_path} -> container workdir: {current_dir}")
-                        else:
-                            print(f"ERROR: Even parent directory mount doesn't work.")
-                            print(f"This is likely a Docker-in-Docker issue where Jenkins is in a container.")
-                            print(f"WORKAROUND: Using docker cp to copy workspace into container...")
-                            # Create a Docker volume and copy files there
-                            volume_name = f"praktika_workspace_{os.getpid()}"
-                            print(f"Creating Docker volume: {volume_name}")
-                            Shell.check(f"docker volume create {volume_name}", verbose=True, strict=True)
-                            try:
-                                # Copy files to the volume using a temporary container
-                                print(f"Copying workspace to volume...")
-                                Shell.check(f"docker run --rm -v {volume_name}:/workspace -v {host_mount_path}:/source:ro alpine sh -c 'cp -a /source/. /workspace/ 2>/dev/null || echo WARNING: cp failed, trying rsync'", verbose=True, strict=False)
-                                # Verify files are in volume
-                                verify_result = Shell.check(f"docker run --rm -v {volume_name}:/workspace alpine ls -la /workspace/ci/jobs/build_clickhouse.py", verbose=True, strict=False)
-                                if verify_result:
-                                    print(f"SUCCESS: Files copied to Docker volume!")
-                                    # Update paths to use volume
-                                    host_mount_path = volume_name
-                                    current_dir = "/workspace"
-                                    print(f"Using Docker volume mount: {host_mount_path} -> {current_dir}")
-                                else:
-                                    print(f"ERROR: Failed to copy files to Docker volume")
-                                    Shell.check(f"docker volume rm {volume_name}", verbose=True, strict=False)
-                            except Exception as e:
-                                print(f"ERROR during volume setup: {e}")
-                                Shell.check(f"docker volume rm {volume_name}", verbose=True, strict=False)
-                                raise
-                            Shell.check(f"docker run --rm --volume {parent_host}:{parent_container}:z --workdir={parent_container} {docker} ls -la", verbose=True, strict=False)
             
             # Use :z flag in the actual command for SELinux compatibility
             cmd = f"docker run --rm --name praktika {'--user $(id -u):$(id -g)' if not from_root else ''} -e PYTHONPATH='.:./ci' --volume {host_mount_path}:{current_dir}:z --workdir={current_dir} {' '.join(settings)} {docker} {job.command}"
