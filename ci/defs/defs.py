@@ -297,6 +297,12 @@ DOCKERS = [
         platforms=Docker.Platforms.arm_amd,
         depends_on=[],
     ),
+    Docker.Config(
+        name="951195317234.dkr.ecr.eu-west-1.amazonaws.com/moodys-observability/clickhouse-binary-builder",
+        path="./ci/docker/binary-builder",
+        platforms=Docker.Platforms.arm_amd,
+        depends_on=[],
+    ),
 ]
 
 
