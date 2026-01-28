@@ -273,6 +273,25 @@ class Runner:
             # Use absolute path for volume mount to ensure Docker can access it
             # Resolve symlinks using os.path.realpath to get the actual filesystem path
             host_mount_path = os.path.realpath('.')
+            
+            # Check if running inside a Docker container (Docker-in-Docker scenario)
+            # If so, translate paths from container to host
+            if os.path.exists('/.dockerenv') or os.path.exists('/run/.containerenv'):
+                print(f"Detected running inside Docker container")
+                # Common pattern: /var/jenkins_home is a volume mounted from host
+                # Check if we can find the real host path
+                if '/var/jenkins_home' in host_mount_path:
+                    potential_host_path = host_mount_path.replace('/var/jenkins_home', '/var/lib/docker/volumes/jenkins/_data')
+                    print(f"Translating path for Docker-in-Docker:")
+                    print(f"  Container path: {host_mount_path}")
+                    print(f"  Potential host path: {potential_host_path}")
+                    # Verify this path works with Docker
+                    test_result = Shell.check(f"docker run --rm -v {potential_host_path}:/test:ro alpine ls /test | head -5", verbose=True, strict=False)
+                    if test_result:
+                        print(f"SUCCESS: Host path translation works!")
+                        host_mount_path = potential_host_path
+                    else:
+                        print(f"WARNING: Translated path doesn't work, will try original path")
             print(f"Docker mount: {host_mount_path} -> {current_dir}")
             print(f"Current working directory: {current_dir}")
             print(f"Host mount path (absolute): {host_mount_path}")
@@ -297,7 +316,15 @@ class Runner:
             print(f"Checking if Docker can access the directory:")
             # Try to exec into a running container to see what Docker daemon can see
             print(f"Testing Docker daemon's view of the filesystem:")
-            Shell.check(f"docker run --rm -v /:/host alpine ls -la /host{host_mount_path} | head -20", verbose=True, strict=False)
+            docker_view_result = Shell.get_output_or_error(f"docker run --rm -v /:/host alpine ls -la /host{host_mount_path} | head -5", verbose=True)
+            if "total 0" in docker_view_result or not docker_view_result.strip():
+                print(f"WARNING: Docker daemon cannot see files in {host_mount_path}")
+                print(f"This suggests Jenkins is running in Docker and the daemon can't access nested mounts")
+                print(f"Attempting workaround: Use docker cp to copy files into a volume...")
+                # Check if there's a different path Docker can access
+                print(f"Checking alternatives:")
+                Shell.check("docker run --rm -v /:/host alpine ls -la /host/tmp | head -5", verbose=True, strict=False)
+                Shell.check("docker run --rm -v /:/host alpine ls -la /host/var/lib | head -5", verbose=True, strict=False)
             for setting in settings:
                 if setting.startswith("--volume"):
                     volume = setting.removeprefix("--volume=").split(":")[0]
@@ -345,7 +372,32 @@ class Runner:
                             current_dir = f"{parent_container}/{Path(current_dir).name}"
                             print(f"Updated mount: {host_mount_path} -> container workdir: {current_dir}")
                         else:
-                            print(f"ERROR: Even parent directory mount doesn't work. This is a Docker configuration issue.")
+                            print(f"ERROR: Even parent directory mount doesn't work.")
+                            print(f"This is likely a Docker-in-Docker issue where Jenkins is in a container.")
+                            print(f"WORKAROUND: Using docker cp to copy workspace into container...")
+                            # Create a Docker volume and copy files there
+                            volume_name = f"praktika_workspace_{os.getpid()}"
+                            print(f"Creating Docker volume: {volume_name}")
+                            Shell.check(f"docker volume create {volume_name}", verbose=True, strict=True)
+                            try:
+                                # Copy files to the volume using a temporary container
+                                print(f"Copying workspace to volume...")
+                                Shell.check(f"docker run --rm -v {volume_name}:/workspace -v {host_mount_path}:/source:ro alpine sh -c 'cp -a /source/. /workspace/ 2>/dev/null || echo WARNING: cp failed, trying rsync'", verbose=True, strict=False)
+                                # Verify files are in volume
+                                verify_result = Shell.check(f"docker run --rm -v {volume_name}:/workspace alpine ls -la /workspace/ci/jobs/build_clickhouse.py", verbose=True, strict=False)
+                                if verify_result:
+                                    print(f"SUCCESS: Files copied to Docker volume!")
+                                    # Update paths to use volume
+                                    host_mount_path = volume_name
+                                    current_dir = "/workspace"
+                                    print(f"Using Docker volume mount: {host_mount_path} -> {current_dir}")
+                                else:
+                                    print(f"ERROR: Failed to copy files to Docker volume")
+                                    Shell.check(f"docker volume rm {volume_name}", verbose=True, strict=False)
+                            except Exception as e:
+                                print(f"ERROR during volume setup: {e}")
+                                Shell.check(f"docker volume rm {volume_name}", verbose=True, strict=False)
+                                raise
                             Shell.check(f"docker run --rm --volume {parent_host}:{parent_container}:z --workdir={parent_container} {docker} ls -la", verbose=True, strict=False)
             
             # Use :z flag in the actual command for SELinux compatibility
