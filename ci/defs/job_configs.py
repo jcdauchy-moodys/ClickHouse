@@ -5,6 +5,9 @@ from ci.defs.defs import ArtifactNames, BuildTypes, JobNames, RunnerLabels
 
 LIMITED_MEM = Utils.physical_memory() - 2 * 1024**3
 
+# Override Docker tag for binary builder (set to None to use digest-based tag)
+BINARY_BUILDER_TAG_OVERRIDE = "ea526917c7dc72be8644_amd"  # Or set to None for auto-calculated digest
+
 build_digest_config = Job.CacheDigestConfig(
     include_paths=[
         "./src",
@@ -44,9 +47,12 @@ common_ft_job_config = Job.Config(
     ),
     result_name_for_cidb="Tests",
 )
-# JCD We change the repo 
+# JCD We change the repo
+BINARY_DOCKER_IMAGE = "951195317234.dkr.ecr.eu-west-1.amazonaws.com/moodys-observability/clickhouse-binary-builder"
 BINARY_DOCKER_COMMAND = (
-    "951195317234.dkr.ecr.eu-west-1.amazonaws.com/moodys-observability/clickhouse-binary-builder+--network=host+"
+    f"{BINARY_DOCKER_IMAGE}:{BINARY_BUILDER_TAG_OVERRIDE}" if BINARY_BUILDER_TAG_OVERRIDE else BINARY_DOCKER_IMAGE
+) + (
+    "+--network=host+"
     f"--memory={Utils.physical_memory() * 95 // 100}+"
     f"--memory-reservation={Utils.physical_memory() * 9 // 10}"
     '+--env=AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID"+--env=AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY"'
