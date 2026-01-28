@@ -286,6 +286,22 @@ class Runner:
                 "docker ps -a --format '{{.Names}}' | grep -q praktika && docker rm -f praktika",
                 verbose=True,
             )
+            
+            # Debug: Check if files are visible inside container
+            print(f"DEBUG: Testing if file is visible in container (with user flag)")
+            test_cmd = f"docker run --rm {'--user $(id -u):$(id -g)' if not from_root else ''} --volume {host_mount_path}:{current_dir} --workdir={current_dir} {' '.join(settings)} {docker} ls -la ./ci/jobs/build_clickhouse.py"
+            test_result = Shell.check(test_cmd, verbose=True, strict=False)
+            if not test_result:
+                print(f"WARNING: File not visible with user flag. Testing without user flag:")
+                test_cmd_no_user = f"docker run --rm --volume {host_mount_path}:{current_dir} --workdir={current_dir} {docker} ls -la ./ci/jobs/build_clickhouse.py"
+                test_result_no_user = Shell.check(test_cmd_no_user, verbose=True, strict=False)
+                if test_result_no_user:
+                    print(f"SUCCESS: File visible without user flag. Removing user flag from main command.")
+                    from_root = True  # This will skip the --user flag
+                else:
+                    print(f"WARNING: File still not visible. Listing root directory:")
+                    Shell.check(f"docker run --rm --volume {host_mount_path}:{current_dir} --workdir={current_dir} {docker} ls -la", verbose=True, strict=False)
+            
             cmd = f"docker run --rm --name praktika {'--user $(id -u):$(id -g)' if not from_root else ''} -e PYTHONPATH='.:./ci' --volume {host_mount_path}:{current_dir} --workdir={current_dir} {' '.join(settings)} {docker} {job.command}"
         else:
             cmd = job.command
