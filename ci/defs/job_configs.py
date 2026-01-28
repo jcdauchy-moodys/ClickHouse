@@ -44,7 +44,7 @@ common_ft_job_config = Job.Config(
     ),
     result_name_for_cidb="Tests",
 )
-
+# JCD We change the repo 
 BINARY_DOCKER_COMMAND = (
     "951195317234.dkr.ecr.eu-west-1.amazonaws.com/moodys-observability/clickhouse-binary-builder+--network=host+"
     f"--memory={Utils.physical_memory() * 95 // 100}+"
